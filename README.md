@@ -1,14 +1,14 @@
-## Acid
+# Acid
 Control client with more efficiency
 
-# Installation
+## Installation
 1. Upload bin folder
 2. Install composer (more below)
 3. Click start.cmd
 4. Change config.yml 
 5. Enjoy!
 
-# Composer Installation
+## Composer Installation
 1. Open Command Prompt
 2. Go to location of your bin folder with cd command
 3. Write 'composer install'
@@ -16,10 +16,10 @@ Control client with more efficiency
 5. Check if there's folder called vendor
 6. Composer installed!
 
-# API Documentation
+## API Documentation
 For API Documentation see [wiki](https://github.com/idoimpossiblethings/Acid/wiki)
 
-# Credits
+## Credits
 svile - Creating [balancer](https://gist.github.com/svilex/b4b00f17724f4e4a528af022fc6f7ddf) :D
 
 
