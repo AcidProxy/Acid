@@ -1,0 +1,52 @@
+{
+  "description": "Proxy created mostly for cheating.",
+  "type": "project",
+  "homepage": "http://netsword.eu",
+  "require": {
+    "php": ">=7.2.0RC3",
+    "ext-bcmath": "*",
+    "ext-curl": "*",
+    "ext-hash": "*",
+    "ext-json": "*",
+    "ext-mbstring": "*",
+    "ext-openssl": "*",
+    "ext-pcre": "*",
+    "ext-phar": "*",
+    "ext-pthreads": ">=3.1.7dev",
+    "ext-reflection": "*",
+    "ext-sockets": "*",
+    "ext-spl": "*",
+    "ext-yaml": ">=2.0.0",
+    "ext-zip": "*",
+    "ext-zlib": ">=1.2.11",
+    "pocketmine/pocketmine-mp": "dev-master",
+    "pocketmine/raklib": "dev-master",
+    "pocketmine/spl": "dev-master",
+    "pocketmine/binaryutils": "dev-master",
+    "pocketmine/nbt": "dev-master",
+    "pocketmine/math": "dev-master"
+  },
+  "name": "Acid Prox",
+  "autoload": {
+    "psr-4": {
+      "": [
+        "src"
+      ]
+    }
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "name": "pocketmine/pocketmine-mp",
+      "url": "https://github.com/pmmp/PocketMine-MP"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/pmmp/RakLib"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/pmmp/BinaryUtils"
+    }
+  ]
+}
