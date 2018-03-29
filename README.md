@@ -1,6 +1,4 @@
 # Acid
- ____  ____  ____ ___  ____  _
-/  __\/  __\/  _ \\  \//\  \//
                               
 Control client with more efficiency
 
