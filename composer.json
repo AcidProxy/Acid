@@ -1,5 +1,6 @@
 {
   "description": "Proxy created mostly for cheating.",
+  "name": "Acid Prox",
   "type": "project",
   "homepage": "http://netsword.eu",
   "require": {
@@ -26,7 +27,6 @@
     "pocketmine/nbt": "dev-master",
     "pocketmine/math": "dev-master"
   },
-  "name": "Acid Prox",
   "autoload": {
     "psr-4": {
       "": [
@@ -46,7 +46,19 @@
     },
     {
       "type": "vcs",
+      "url": "https://github.com/pmmp/SPL"
+    },
+    {
+      "type": "vcs",
       "url": "https://github.com/pmmp/BinaryUtils"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/pmmp/NBT"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/pmmp/Math"
     }
   ]
 }
