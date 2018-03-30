@@ -56,7 +56,7 @@ class ProxyCommandMap
      * @return null|\proxy\command\Command
      */
     public function getCommand(string $name) : ?Command{
-        if(isset($this->commands[$name])){
+        if(empty($this->commands[$name])){
             return null;
         }
         return $this->commands[$name];

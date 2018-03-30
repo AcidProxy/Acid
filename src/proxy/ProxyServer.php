@@ -1,5 +1,6 @@
-<?php namespace proxy;
+<?php
 
+namespace proxy;
 
 use pocketmine\level\format\Chunk;
 use pocketmine\network\mcpe\protocol\BatchPacket;

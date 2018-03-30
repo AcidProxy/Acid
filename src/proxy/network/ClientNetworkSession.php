@@ -107,14 +107,16 @@ class ClientNetworkSession
         $packets = [SetPlayerGameTypePacket::NETWORK_ID, StartGamePacket::NETWORK_ID];
         switch($packet::NETWORK_ID){
             case SetPlayerGameTypePacket::NETWORK_ID;
-            $packet->decode();
-            ECHO 'CC';
-            $this->getClient()->setGamemode($packet->gamemode, false);
-            break;
+                $packet->decode();
+                $this->getClient()->setGamemode($packet->gamemode, false);
+                break;
             case StartGamePacket::NETWORK_ID;
-            $packet->decode();
-            echo 'aa';
-            $this->getClient()->setGamemode($packet->gamemode, false);
+                $packet->decode();
+                if($packet->worldGamemode === null) {
+                    $this->getClient()->setGamemode(1, false);
+                    break;
+                }
+                $this->getClient()->setGamemode($packet->worldGamemode, false);
             break;
         }
         foreach($this->getProxy()->getPluginManager()->getPlugins() as $plugin){
