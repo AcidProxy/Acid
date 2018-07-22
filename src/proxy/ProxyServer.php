@@ -143,9 +143,6 @@ class ProxyServer {
         }
     }
 
-    private $last_packet;
-
-
     /**
      * @param string $buffer
      * @param BaseHost $host
@@ -156,11 +153,6 @@ class ProxyServer {
             if($host instanceof ProxyClient){
                 $state = $this->getClient()->getNetworkSession()->handleClientDataPacket($packet);
                 if(!$state){
-                    if($this->last_packet !== null &&$this->last_packet == $buffer){
-                        echo 'SAME!!' . PHP_EOL;
-                    }
-                    $this->last_packet = $buffer;
-                    echo get_class($packet);
                     $this->getTargetServer()->sendPacket($this->getPacketSession()->forwardPacket($packet)->getBuffer());
                     return false;
                 }
