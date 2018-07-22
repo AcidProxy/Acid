@@ -22,7 +22,7 @@ class PacketSession {
     /**
      * @var int
      */
-    private $sendSeqNumber = 0;
+    public $sendSeqNumber = 0;
 
     /**
      * @var \SplObjectStorage
@@ -95,6 +95,17 @@ class PacketSession {
         return null;
     }
 
+    /**
+     * @param DataPacket $packet
+     * @return ACK
+     */
+    public function forwardPacket(DataPacket $packet) : ACK{
+        $ack = new ACK();
+        $ack->packets[] = $this->recoveryQueue[$packet];
+        $ack->encode();
+        return $ack;
+    }
+
     public function decodeSplit(EncapsulatedPacket $packet) : ?EncapsulatedPacket{
         if($packet->splitCount >= static::MAX_SPLIT_SIZE or $packet->splitIndex >= static::MAX_SPLIT_SIZE or $packet->splitIndex < 0){
             return null;
@@ -108,41 +119,18 @@ class PacketSession {
             $this->splitPackets[$packet->splitID][$packet->splitIndex] = $packet;
         }
         if(count($this->splitPackets[$packet->splitID]) === $packet->splitCount){
-            $pk = new EncapsulatedPacket;
-            $pk->buffer = "";
-            for($i = 0; $i < $packet->splitCount; ++$i){
-                $pk->buffer .= $this->splitPackets[$packet->splitID][$i]->buffer;
-            }
-            $pk->length = strlen($pk->buffer);
-            unset($this->splitPackets[$packet->splitID]);
-            return $pk;
-        }
-        return null;
-    }
-
-
-    /**
-     * @param EncapsulatedPacket $packet
-     * @return null|EncapsulatedPacket
-     */
-    private function handleSplit(EncapsulatedPacket $packet) : ?EncapsulatedPacket{
-        if($packet->splitCount >= self::MAX_SPLIT_SIZE or $packet->splitIndex >= self::MAX_SPLIT_SIZE or $packet->splitIndex < 0){
-            return null;
-        }
-        if(!isset($this->splitPackets[$packet->splitID])){
-            if(count($this->splitPackets) >= self::MAX_SPLIT_COUNT){
-                return null;
-            }
-            $this->splitPackets[$packet->splitID] = [$packet->splitIndex => $packet];
-        }else{
-            $this->splitPackets[$packet->splitID][$packet->splitIndex] = $packet;
-        }
-        if(count($this->splitPackets[$packet->splitID]) === $packet->splitCount){
             $pk = new EncapsulatedPacket();
             $pk->buffer = "";
+            $pk->reliability = $packet->reliability;
+            $pk->messageIndex = $packet->messageIndex;
+            $pk->sequenceIndex = $packet->sequenceIndex;
+            $pk->orderIndex = $packet->orderIndex;
+            $pk->orderChannel = $packet->orderChannel;
+
             for($i = 0; $i < $packet->splitCount; ++$i){
                 $pk->buffer .= $this->splitPackets[$packet->splitID][$i]->buffer;
             }
+
             $pk->length = strlen($pk->buffer);
             unset($this->splitPackets[$packet->splitID]);
             return $pk;

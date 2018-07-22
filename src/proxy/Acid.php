@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace proxy;
 
-use Composer\Autoload\ClassLoader;
 use pocketmine\utils\Config;
 
 define("COMPOSER", "vendor/autoload.php");
-
-cli_set_process_title("AcidProxy - MCBE Proxy software");
 
 $extensions = ["pthreads", "sockets", "yaml"];
 
@@ -25,10 +22,8 @@ if(!is_file(COMPOSER)){
     exit;
 }
 
-/** @var ClassLoader $loader */
-$loader = require COMPOSER;
-
-
+// class loader
+require_once COMPOSER;
 
 $settings = [
     'server-ip' => 'pe.gameteam.cz', # sorry Honzo :D

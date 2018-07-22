@@ -26,7 +26,7 @@ class ConsoleCommandSender implements Sender {
      * @param string $message
      */
     public function sendMessage(string $message) {
-        $this->getCommandMap()->getProxy()->getLogger()->info($message);
+        $this->getCommandMap()->getServer()->getLogger()->info($message);
     }
 
     /**

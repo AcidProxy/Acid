@@ -25,21 +25,13 @@ class Logger {
      * @param string $text
      */
     public function info(string $text): void {
-        $lines = [];
-        foreach (explode(PHP_EOL, $text) as $line) {
-            $lines[] = Terminal::toANSI("§b[".gmdate("H:i:s", time())."] §6[Main/Server thread] §eInfo §r> " . $line . "§r");
-        }
-        echo implode(PHP_EOL, $lines);
-        echo PHP_EOL;
+        echo Terminal::toANSI("§b[".gmdate("H:i:s", time())."] §6[Main/Server thread] §eInfo §r> " . $text . "§r" . PHP_EOL);
     }
 
     /**
      * @param string $text
      */
     public function error(string $text): void {
-        $text = Terminal::toANSI("§b[".gmdate("H:i:s", time())."] §6[Main/Server thread] §4Error §r> " . $text . "§r");
-        foreach (explode(PHP_EOL, $text) as $line) {
-            echo $line . PHP_EOL;
-        }
+        echo Terminal::toANSI("§b[".gmdate("H:i:s", time())."] §6[Main/Server thread] §eInfo §r> " . $text . "§r" . PHP_EOL);
     }
 }

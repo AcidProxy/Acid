@@ -17,16 +17,15 @@ class UnknownCommand extends Command {
 
     /**
      * @param Sender $sender
-     * @param array $args
      *
-     * @return bool
+     * @return bool $sendHasNotPerms
      */
-    public function execute(Sender $sender, array $args): bool {
+    public function execute(Sender $sender, $args): bool {
         if($sender instanceof ConsoleCommandSender) {
             $sender->sendMessage(Terminal::$COLOR_RED . "Unknown command. Try 'help' to get list of all commands.");
             return true;
         }
-        $sender->sendMessage("§cUnknown command. Try */help to get list of all commands.");
+        $sender->sendMessage("§cUnknown command. Try ./help to get list of all commands.");
         return true;
     }
 }

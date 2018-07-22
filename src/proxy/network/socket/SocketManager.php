@@ -36,6 +36,8 @@ class SocketManager extends \Thread {
     public function __construct(ProxyServer $server, array $connection) {
         $this->server = $server;
         $this->connection = $connection;
+        #$this->received = new \Threaded;
+        #$this->toSend = new \Threaded;
     }
 
     /**
@@ -49,7 +51,7 @@ class SocketManager extends \Thread {
 
 
     public function run() {
-        // classloader
+        // classloader ._.
         require COMPOSER;
         // logger
         $logger = new AsyncLogger("Socket thread");
@@ -73,7 +75,6 @@ class SocketManager extends \Thread {
         $socket->setOption(SOL_SOCKET, SO_SNDBUF, 1024 * 1024 * 8);
 
         while ($this->stop !== true) {
-            echo "SM\n";
             $socket->receive();
             $socket->send();
         }

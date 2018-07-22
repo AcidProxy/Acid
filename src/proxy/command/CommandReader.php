@@ -31,7 +31,6 @@ class CommandReader extends \Thread {
     public function run() {
         $resource = fopen("php://stdin", "r");
         while ($this->stop !== true) {
-            echo "CR\n";
             $commandLine = trim(fgets($resource));
             if($commandLine != "") {
                 $this->buffer[] = $commandLine;

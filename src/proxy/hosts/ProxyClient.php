@@ -42,7 +42,8 @@ class ProxyClient extends BaseHost implements Sender {
      * ProxyClient constructor.
      * @param ProxyServer $proxyServer
      */
-    public function __construct(ProxyServer $proxyServer) {
+    public function __construct(ProxyServer $proxyServer)
+    {
         $this->proxyServer = $proxyServer;
         $this->networkSession = new ClientNetworkSession($this, $proxyServer);
         parent::__construct($proxyServer);
@@ -63,14 +64,15 @@ class ProxyClient extends BaseHost implements Sender {
      * @param string $username
      * @return bool
      */
-    public function hasValidUsername(string $username): bool {
+    public function hasValidUsername(string $username) : bool
+    {
         return strlen($username) > 1 && strlen($username) <= 16 && $username !== "rcon" && $username !== "console";
     }
 
     /**
      * @param string $message
      */
-    public function close(string $message) : void {
+    public function close(string $message) : void{
         $pk = new DisconnectPacket();
         $pk->message = $message;
         $this->getProxy()->getPacketSession()->writeDataPacket($pk, $this);
@@ -82,7 +84,7 @@ class ProxyClient extends BaseHost implements Sender {
      * @param string $message
      * @param int $type
      */
-    public function sendMessage(string $message, int $type = TextPacket::TYPE_RAW) : void {
+    public function sendMessage(string $message, int $type = TextPacket::TYPE_RAW) : void{
         $pk = new TextPacket();
         $pk->type = $type;
         $pk->message = $message;

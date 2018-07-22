@@ -16,6 +16,7 @@ use proxy\raknet\client\SessionManager;
 use proxy\scheduler\ProxyScheduler;
 use proxy\utils\Logger;
 use proxy\utils\PacketSession;
+use raklib\protocol\Datagram;
 use raklib\protocol\OpenConnectionRequest1;
 use raklib\protocol\UnconnectedPing;
 use raklib\protocol\UnconnectedPong;
@@ -91,25 +92,26 @@ class ProxyServer {
         $this->pluginManager->loadPlugins(self::PLUGINS_DIR);
         $this->getLogger()->info(TextFormat::GREEN . "Proxy started in " . round((microtime(true) - $startTime),3) . " seconds");
 
+
         $this->tickProcessor();
     }
 
-    public function tickProcessor(): void {
-        while($this->running === true) {
+    public function tickProcessor() : void {
+        while($this->running !== false) {
             $this->tick();
         }
     }
 
-    public function tick(): void {
+    public function tick() : void {
         $this->tickNetwork();
         $this->tickCommands();
     }
 
-    private function tickCommands(): void {
+    private function tickCommands() : void {
         $this->commandMap->tick();
     }
 
-    private function tickNetwork(): void {
+    private function tickNetwork() : void {
         foreach ($this->socketMgr->received as $index => $received) {
             /** @var string $buffer */
             $buffer = $received[0];
@@ -127,12 +129,13 @@ class ProxyServer {
             }
             else {
                 if ($compareAddress->equals($this->getTargetServer()->getAddress())) {
-                    $this->getPacket($buffer, $this->getTargetServer());
                     $this->getClient()->sendPacket($buffer);
+                    $this->getPacket($buffer, $this->getTargetServer());
                 }
                 elseif ($compareAddress->equals($this->getClient()->getAddress())) {
-                    $this->getPacket($buffer, $this->getClient());
-                    $this->getTargetServer()->sendPacket($buffer);
+                    if($this->getPacket($buffer, $this->getClient())){
+                        $this->getTargetServer()->sendPacket($buffer);
+                    }
                 }
             }
             unset($this->socketMgr->received[$index]);
@@ -140,30 +143,39 @@ class ProxyServer {
         }
     }
 
+    private $last_packet;
+
 
     /**
      * @param string $buffer
      * @param BaseHost $host
      * @return bool
      */
-    public function getPacket(string $buffer, BaseHost $host): bool {
+    public function getPacket(string $buffer, BaseHost $host) : bool {
         if(($packet = $this->packetSession->readDataPacket($buffer)) !== null){
             if($host instanceof ProxyClient){
-                $this->getClient()->getNetworkSession()->handleClientDataPacket($packet);
+                $state = $this->getClient()->getNetworkSession()->handleClientDataPacket($packet);
+                if(!$state){
+                    if($this->last_packet !== null &&$this->last_packet == $buffer){
+                        echo 'SAME!!' . PHP_EOL;
+                    }
+                    $this->last_packet = $buffer;
+                    echo get_class($packet);
+                    $this->getTargetServer()->sendPacket($this->getPacketSession()->forwardPacket($packet)->getBuffer());
+                    return false;
+                }
             }else{
                 $this->getClient()->getNetworkSession()->handleServerDataPacket($packet);
             }
-            return true;
         }
-        return false;
+        return true;
     }
 
 
     /**
      * @param string $buffer
-     * @param InternetAddress $compareAddress
      */
-    private function handleRakNetPacket(string $buffer, InternetAddress $compareAddress): void{
+    private function handleRakNetPacket(string $buffer, InternetAddress $compareAddress) : void{
         switch(ord($buffer{0})){
             case UnconnectedPing::$ID;
                 if(!isset($this->sessionManager->clientSessions[gethostbyname($compareAddress->ip)])){
@@ -181,7 +193,7 @@ class ProxyServer {
                     $this->getLogger()->info(TextFormat::AQUA . "PLAYERS: " . $serverInfo[3]);
                     $this->getLogger()->info(TextFormat::AQUA . "MCPE: " . $serverInfo[2]);
                     $this->getLogger()->info(TextFormat::AQUA . "PROTOCOL: " . $serverInfo[1]);
-                    $this->getLogger()->info(TextFormat::AQUA . "MOTD: " . $serverInfo[0]);
+                    $this->getLogger()->info(TextFormat::AQUA . "MOTD: " . $serverInfo[0] . PHP_EOL);
                 }
                 $this->getTargetServer()->setInformation($serverInfo);
                 foreach($this->sessionManager->clientSessions as $session){
@@ -203,27 +215,17 @@ class ProxyServer {
     }
 
     private function startThreadWorkers() : void {
-
         $this->socketMgr->start(PTHREADS_INHERIT_ALL);
         $this->commandMap->consoleCommandReader->start(PTHREADS_INHERIT_ALL);
-
         // main + socket + commands
-        $this->getLogger()->info("§6Started 3 threads!");
+        $this->getLogger()->info("§6Started 3 threads");
     }
 
     public function stop() : void {
         $this->running = false;
-        $this->getLogger()->info("§6Stopping other threads...");
-
-        $this->socketMgr->join();
-        $this->socketMgr->notify();
         $this->socketMgr->stop = true;
-        unset($this->socketMgr->stop);
-
-        $this->commandMap->consoleCommandReader->join();
-        $this->commandMap->consoleCommandReader->notify();
         $this->commandMap->consoleCommandReader->stop = true;
-        unset($this->commandMap->consoleCommandReader);
+        unset($this->socketMgr);
     }
 
     /**
