@@ -2,35 +2,29 @@
 
 namespace proxy\command;
 
-
-use proxy\hosts\Client;
+use proxy\command\sender\Sender;
 use proxy\hosts\ProxyClient;
 
-abstract class Command
-{
-    /**
-     * @var string $usageMessage
-     */
-    private $usageMessage;
+/**
+ * Class Command
+ * @package proxy\command
+ */
+abstract class Command {
 
-    /**
-     * @var string $name
-     */
+    /** @var string $name */
     private $name;
 
-    private $aliases = [];
+    /** @var string $description */
+    private $description;
 
     /**
      * Command constructor.
      * @param string $name
-     * @param string|null $usageMessage
-     * @param array $aliases
+     * @param string|null $description
      */
-    public function __construct(string $name, string $usageMessage = null, array $aliases = [])
-    {
+    public function __construct(string $name, string $description = null) {
         $this->name = $name;
-        $this->usageMessage = is_null($this->usageMessage) ? "" : $this->usageMessage;
-        $this->aliases = $aliases;
+        $this->description = is_null($description) ? "" : $description;
     }
 
     /**
@@ -43,22 +37,22 @@ abstract class Command
     /**
      * @return string
      */
-    public function getUsage() : string{
-        return $this->usageMessage;
+    public function getDescription() : string{
+        return $this->description;
     }
 
     /**
-     * @param string $usageMessage
+     * @param string $description
      */
-    public function setUsage(string $usageMessage){
-        $this->usageMessage = $usageMessage;
+    public function setDescription(string $description){
+        $this->description = $description;
     }
 
     /**
-     * @param ProxyClient $sender
+     * @param Sender $sender
      * @param array $args
      * @return bool
      */
-    abstract public function execute(ProxyClient $sender, array $args) : bool;
+    abstract public function execute(Sender $sender, array $args) : bool;
 
 }

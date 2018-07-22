@@ -1,65 +1,28 @@
-#!/bin/bash
-DIR="$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
-cd "$DIR"
+#!/usr/bin/env bash
 
-DO_LOOP="yes"
-
-while getopts "p:f:l" OPTION 2> /dev/null; do
-	case ${OPTION} in
-		p)
-			PHP_BINARY="$OPTARG"
-			;;
-		f)
-			ACID_FILE="$OPTARG"
-			;;
-		l)
-			DO_LOOP="yes"
-			;;
-		\?)
-			break
-			;;
-	esac
-done
-
-if [ "$PHP_BINARY" == "" ]; then
-	if [ -f ./bin/php7/bin/php ]; then
-		export PHPRC=""
-		PHP_BINARY="./bin/php7/bin/php"
-	elif [[ ! -z $(type php) ]]; then
-		PHP_BINARY=$(type -p php)
-	else
-		echo "Couldn't find a working PHP 7 binary, please use the installer."
-		exit 1
-	fi
+if [ ! -f ./bin/ ]; then
+    echo "PHP Binary not found, installing php..."
+    wget https://jenkins.pmmp.io/job/PHP-7.2-Linux-x86_64/lastSuccessfulBuild/artifact/PHP_Linux-x86_64.tar.gz;
+    echo "Extracting php binary..."
+    tar -xzf PHP_Linux-x86_64.tar.gz
+    if [ -f ./bin/ ]; then
+        echo "PHP successfully installed!";
+    fi
 fi
 
-if [ "$ACID_FILE" == "" ]; then
-	if [ -f ./Acid.phar ]; then
-		ACID_FILE="./Acid.phar"
-	elif [ -f ./src/proxy/Loader.php ]; then
-		ACID_FILE="./src/proxy/Loader.php"
-	else
-		echo "Couldn't find a valid Acid installation"
-		exit 1
-	fi
+if [ ! -f ./bin/php7/bin/php ]; then
+    echo "Could not start server: PHP not found."
+    exit 1
 fi
 
-LOOPS=0
+if [ ! -f ./composer.json ]; then
+    ./bin/php7/bin/php ./install/composer_install.php
+fi
 
-set +e
-while [ "$LOOPS" -eq 0 ] || [ "$DO_LOOP" == "yes" ]; do
-	if [ "$DO_LOOP" == "yes" ]; then
-		"$PHP_BINARY" "$ACID_FILE" $@
-	else
-		exec "$PHP_BINARY" "$ACID_FILE" $@
-	fi
-	if [ "$DO_LOOP" == "yes" ]; then
-		if [ ${LOOPS} -gt 0 ]; then
-			echo "Restarted $LOOPS times"
-		fi
-		echo "To escape the loop, press CTRL+C now. Otherwise, wait 5 seconds for the server to restart."
-		echo ""
-		sleep 5
-		((LOOPS++))
-	fi
-done
+if [ ! -f ./vendor/autoload.php ]; then
+    echo "Installing composer, after installation run again ./start.sh"
+    ./bin/composer install
+    exit 1
+fi
+
+./bin/php7/bin/php ./src/proxy/Acid.php

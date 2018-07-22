@@ -14,8 +14,7 @@ use raklib\protocol\EncapsulatedPacket;
 use raklib\protocol\NACK;
 use raklib\server\Session;
 
-class PacketSession
-{
+class PacketSession {
 
     const MAX_SPLIT_SIZE = 128;
     const MAX_SPLIT_COUNT = 4;
@@ -51,15 +50,11 @@ class PacketSession
 
 
 
-
-
-
     /**
      * Pool constructor.
      * @param ProxyServer $proxyServer
      */
-    public function __construct(ProxyServer $proxyServer)
-    {
+    public function __construct(ProxyServer $proxyServer) {
         $this->proxyServer = $proxyServer;
         $this->sendSeqNumber = 0;
         $this->recoveryQueue = new \SplObjectStorage;
@@ -101,11 +96,11 @@ class PacketSession
     }
 
     public function decodeSplit(EncapsulatedPacket $packet) : ?EncapsulatedPacket{
-        if($packet->splitCount >= Session::MAX_SPLIT_SIZE or $packet->splitIndex >= Session::MAX_SPLIT_SIZE or $packet->splitIndex < 0){
+        if($packet->splitCount >= static::MAX_SPLIT_SIZE or $packet->splitIndex >= static::MAX_SPLIT_SIZE or $packet->splitIndex < 0){
             return null;
         }
         if(!isset($this->splitPackets[$packet->splitID])){
-            if(count($this->splitPackets) >= Session::MAX_SPLIT_COUNT){
+            if(count($this->splitPackets) >= static::MAX_SPLIT_COUNT){
                 return null;
             }
             $this->splitPackets[$packet->splitID] = [$packet->splitIndex => $packet];

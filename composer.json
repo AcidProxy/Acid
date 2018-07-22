@@ -1,8 +1,8 @@
 {
   "description": "Proxy created mostly for cheating.",
-  "name": "Acid Prox",
+  "name": "ACID Proxy",
   "type": "project",
-  "homepage": "http://netsword.eu",
+  "homepage": "http://github.com/GamakCZ/Acid",
   "require": {
     "php": ">=7.2.0RC3",
     "ext-bcmath": "*",
@@ -20,17 +20,19 @@
     "ext-yaml": ">=2.0.0",
     "ext-zip": "*",
     "ext-zlib": ">=1.2.11",
-    "pocketmine/pocketmine-mp": "dev-master",
-    "pocketmine/raklib": "dev-master",
-    "pocketmine/spl": "dev-master",
-    "pocketmine/binaryutils": "dev-master",
-    "pocketmine/nbt": "dev-master",
-    "pocketmine/math": "dev-master"
+    "pocketmine/pocketmine-mp": "^3.0.6",
+    "pocketmine/raklib": "^0.12.0",
+    "pocketmine/spl": "^0.3.0",
+    "pocketmine/binaryutils": "^0.1.0",
+    "pocketmine/nbt": "^0.2.0",
+    "pocketmine/math": "^0.2.0",
+    "pocketmine/snooze": "^0.1.0"
   },
   "autoload": {
     "psr-4": {
       "": [
-        "src"
+        "src",
+        "plugins"
       ]
     }
   },
@@ -59,6 +61,10 @@
     {
       "type": "vcs",
       "url": "https://github.com/pmmp/Math"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/pmmp/Snooze"
     }
   ]
 }

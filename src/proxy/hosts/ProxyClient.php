@@ -1,56 +1,48 @@
-<?php namespace proxy\hosts;
+<?php
 
+declare(strict_types=1);
+
+namespace proxy\hosts;
 
 use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\protocol\DisconnectPacket;
 use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\network\mcpe\protocol\SetPlayerGameTypePacket;
-use pocketmine\network\mcpe\protocol\SubClientLoginPacket;
 use pocketmine\network\mcpe\protocol\TextPacket;
 use pocketmine\utils\TextFormat;
+use proxy\command\sender\Sender;
 use proxy\network\ClientNetworkSession;
 use proxy\ProxyServer;
 
-class ProxyClient extends BaseHost
-{
+/**
+ * Class ProxyClient
+ * @package proxy\hosts
+ */
+class ProxyClient extends BaseHost implements Sender {
 
-    /**
-     * @var ProxyServer $proxyServer
-     */
+    /** @var ProxyServer $proxyServer */
     private $proxyServer;
 
-    /**
-     * @var bool $isConnected
-     */
+    /** @var bool $isConnected */
     private $isConnected = false;
 
-    /**
-     * @var string $username
-     */
+    /** @var string $username */
     private $username;
 
-    /**
-     * @var Vector3 $position
-     */
+    /** @var Vector3 $position */
     private $position;
 
-    /**
-     * @var int $gamemode
-     */
+    /** @var int $gamemode */
     private $gamemode = 0;
 
-    /**
-     * @var ClientNetworkSession $networkSession
-     */
+    /** @var ClientNetworkSession $networkSession */
     private $networkSession;
-
 
     /**
      * ProxyClient constructor.
      * @param ProxyServer $proxyServer
      */
-    public function __construct(ProxyServer $proxyServer)
-    {
+    public function __construct(ProxyServer $proxyServer) {
         $this->proxyServer = $proxyServer;
         $this->networkSession = new ClientNetworkSession($this, $proxyServer);
         parent::__construct($proxyServer);
@@ -71,15 +63,14 @@ class ProxyClient extends BaseHost
      * @param string $username
      * @return bool
      */
-    public function hasValidUsername(string $username) : bool
-    {
+    public function hasValidUsername(string $username): bool {
         return strlen($username) > 1 && strlen($username) <= 16 && $username !== "rcon" && $username !== "console";
     }
 
     /**
      * @param string $message
      */
-    public function close(string $message) : void{
+    public function close(string $message) : void {
         $pk = new DisconnectPacket();
         $pk->message = $message;
         $this->getProxy()->getPacketSession()->writeDataPacket($pk, $this);
@@ -91,7 +82,7 @@ class ProxyClient extends BaseHost
      * @param string $message
      * @param int $type
      */
-    public function sendMessage(string $message, int $type = TextPacket::TYPE_RAW) : void{
+    public function sendMessage(string $message, int $type = TextPacket::TYPE_RAW) : void {
         $pk = new TextPacket();
         $pk->type = $type;
         $pk->message = $message;

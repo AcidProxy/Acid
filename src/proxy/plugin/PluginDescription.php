@@ -37,10 +37,10 @@ class PluginDescription
     /**
      * PluginDescription constructor.
      * @param array $pluginData
+     * @param Logger $logger
      * @throws \Exception
      */
-    public function __construct(array $pluginData, Logger $logger)
-    {
+    public function __construct(array $pluginData, Logger $logger) {
         $this->name = $pluginData['name'];
         if(preg_match('/^[A-Za-z0-9 _.-]+$/', $this->name) === 0){
             throw new \Exception("Invalid PluginDescription name");
