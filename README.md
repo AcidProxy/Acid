@@ -5,7 +5,7 @@
 <br>
 
 <p align="center">
-	<a href="https://discord.gg/zQqpz2k">
+	<a href="https://discord.gg/qrfKGp6k">
 		<img src="https://img.shields.io/badge/chat-on%20discord-blue.svg">
 	</a>
 	<a href="https://github.com/GamakCZ/Acid/blob/master/LICENSE">
@@ -44,7 +44,6 @@
 		`./start.sh`
 3) Run `./start.sh` again
 
-### Credits
-svile - Creating [balancer](https://gist.github.com/svilex/b4b00f17724f4e4a528af022fc6f7ddf) :D
+
 
 
