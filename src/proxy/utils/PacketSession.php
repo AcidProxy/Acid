@@ -77,7 +77,7 @@ class PacketSession {
             }else{
                 if(($datagram = new Datagram($buffer)) instanceof Datagram){
                     $datagram->decode();
-                    $this->sendSeqNumber = $datagram->seqNumber;
+                 //   $this->sendSeqNumber = $datagram->seqNumber;
                     foreach($datagram->packets as $packet){
                         if($packet->hasSplit){
                             $split = $this->decodeSplit($packet);
@@ -127,7 +127,6 @@ class PacketSession {
             $pk->sequenceIndex = $packet->sequenceIndex;
             $pk->orderIndex = $packet->orderIndex;
             $pk->orderChannel = $packet->orderChannel;
-            var_dump($pk->orderIndex);
             for($i = 0; $i < $packet->splitCount; ++$i){
                 $pk->buffer .= $this->splitPackets[$packet->splitID][$i]->buffer;
             }
@@ -156,6 +155,8 @@ class PacketSession {
         $encapsulated->orderIndex = Binary::readLTriad(substr($encapsulated->buffer, $offset, 3));
         $offset += 3;
         $encapsulated->orderChannel = ord($encapsulated->buffer{$offset++});
+        $encapsulated->messageIndex = Binary::readLTriad(substr($encapsulated->buffer, $offset, 3));
+        $encapsulated->sequenceIndex = Binary::readLTriad(substr($encapsulated->buffer, $offset, 3));
         $dataPacket = new Datagram;
         $dataPacket->seqNumber = $this->sendSeqNumber++;
         $dataPacket->sendTime = microtime(true);

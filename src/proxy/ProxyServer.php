@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace proxy;
 
 use pocketmine\network\mcpe\protocol\PacketPool;
+use pocketmine\network\mcpe\protocol\TextPacket;
 use pocketmine\utils\TextFormat;
 use proxy\command\CommandMap;
 use proxy\hosts\BaseHost;
@@ -133,7 +134,21 @@ class ProxyServer {
                     $this->getPacket($buffer, $this->getTargetServer());
                 }
                 elseif ($compareAddress->equals($this->getClient()->getAddress())) {
-                    if($this->getPacket($buffer, $this->getClient())){
+                    $pid = ord($buffer{0});
+                    if(($pid & Datagram::BITFLAG_VALID) !== 0) {
+                        if ($pid & Datagram::BITFLAG_ACK) {
+                            goto a;
+                        } elseif ($pid & Datagram::BITFLAG_NAK) {
+                            goto a;
+                        } else {
+                            $datagram = new Datagram($buffer);
+                            @$datagram->decode();
+                            $datagram->seqNumber = $this->getPacketSession()->sendSeqNumber++;
+                            $this->getTargetServer()->sendPacket($datagram->buffer);
+                            $this->getPacket($buffer, $this->getClient());
+                        }
+                }else{
+                        a:
                         $this->getTargetServer()->sendPacket($buffer);
                     }
                 }
@@ -146,21 +161,21 @@ class ProxyServer {
     /**
      * @param string $buffer
      * @param BaseHost $host
-     * @return bool
+     * @return null|string
      */
-    public function getPacket(string $buffer, BaseHost $host) : bool {
+    public function getPacket(string $buffer, BaseHost $host) : ?string {
         if(($packet = $this->packetSession->readDataPacket($buffer)) !== null){
             if($host instanceof ProxyClient){
                 $state = $this->getClient()->getNetworkSession()->handleClientDataPacket($packet);
                 if(!$state){
                     $this->getTargetServer()->sendPacket($this->getPacketSession()->forwardPacket($packet)->getBuffer());
-                    return false;
+                    return null;
                 }
             }else{
                 $this->getClient()->getNetworkSession()->handleServerDataPacket($packet);
             }
         }
-        return true;
+        return $buffer;
     }
 
 
