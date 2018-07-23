@@ -6,6 +6,7 @@ namespace proxy\utils;
 use pocketmine\network\mcpe\protocol\BatchPacket;
 use pocketmine\network\mcpe\protocol\DataPacket;
 use pocketmine\network\mcpe\protocol\PacketPool;
+use pocketmine\utils\Binary;
 use proxy\hosts\BaseHost;
 use proxy\ProxyServer;
 use raklib\protocol\ACK;
@@ -119,14 +120,14 @@ class PacketSession {
             $this->splitPackets[$packet->splitID][$packet->splitIndex] = $packet;
         }
         if(count($this->splitPackets[$packet->splitID]) === $packet->splitCount){
-            $pk = new EncapsulatedPacket();
+            $pk = new EncapsulatedPacket;
             $pk->buffer = "";
             $pk->reliability = $packet->reliability;
             $pk->messageIndex = $packet->messageIndex;
             $pk->sequenceIndex = $packet->sequenceIndex;
             $pk->orderIndex = $packet->orderIndex;
             $pk->orderChannel = $packet->orderChannel;
-
+            var_dump($pk->orderIndex);
             for($i = 0; $i < $packet->splitCount; ++$i){
                 $pk->buffer .= $this->splitPackets[$packet->splitID][$i]->buffer;
             }
@@ -151,6 +152,10 @@ class PacketSession {
         $encapsulated = new EncapsulatedPacket;
         $encapsulated->reliability = 0;
         $encapsulated->buffer = $batch->buffer;
+        $offset = 3;
+        $encapsulated->orderIndex = Binary::readLTriad(substr($encapsulated->buffer, $offset, 3));
+        $offset += 3;
+        $encapsulated->orderChannel = ord($encapsulated->buffer{$offset++});
         $dataPacket = new Datagram;
         $dataPacket->seqNumber = $this->sendSeqNumber++;
         $dataPacket->sendTime = microtime(true);
