@@ -9,7 +9,8 @@ use proxy\hosts\ProxyClient;
  * Class Command
  * @package proxy\command
  */
-abstract class Command {
+abstract class Command
+{
 
     /** @var string $name */
     private $name;
@@ -22,7 +23,8 @@ abstract class Command {
      * @param string $name
      * @param string|null $description
      */
-    public function __construct(string $name, ?string $description = null) {
+    public function __construct(string $name, ?string $description = null)
+    {
         $this->name = $name;
         $this->description = is_null($description) ? "" : $description;
     }
@@ -30,21 +32,24 @@ abstract class Command {
     /**
      * @return string
      */
-    public function getName() : string{
+    public function getName(): string
+    {
         return $this->name;
     }
 
     /**
      * @return string
      */
-    public function getDescription() : string{
+    public function getDescription(): string
+    {
         return $this->description;
     }
 
     /**
      * @param string $description
      */
-    public function setDescription(string $description){
+    public function setDescription(string $description)
+    {
         $this->description = $description;
     }
 
@@ -53,6 +58,6 @@ abstract class Command {
      * @param array $args
      * @return bool
      */
-    abstract public function execute(Sender $sender, array $args) : bool;
+    abstract public function execute(Sender $sender, array $args): bool;
 
 }

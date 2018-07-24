@@ -11,7 +11,8 @@ use raklib\utils\InternetAddress;
  * Class SessionManager
  * @package proxy\raknet\client
  */
-class SessionManager {
+class SessionManager
+{
 
     /** @var Session[] $clientSessions */
     public $clientSessions = [];
@@ -23,21 +24,24 @@ class SessionManager {
      * SessionManager constructor.
      * @param ProxyServer $proxyServer
      */
-    public function __construct(ProxyServer $proxyServer) {
+    public function __construct(ProxyServer $proxyServer)
+    {
         $this->proxyServer = $proxyServer;
     }
 
     /**
      * @return ProxyServer $server
      */
-    public function getProxy() : ProxyServer{
+    public function getProxy(): ProxyServer
+    {
         return $this->proxyServer;
     }
 
     /**
      * @param InternetAddress $address
      */
-    public function addSession(InternetAddress $address){
+    public function addSession(InternetAddress $address)
+    {
         $this->clientSessions[gethostbyname($address->ip)] = new Session($address);
     }
 

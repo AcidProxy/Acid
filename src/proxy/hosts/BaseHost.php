@@ -35,35 +35,40 @@ class BaseHost
     /**
      * @return ProxyServer
      */
-    public function getProxy() : ProxyServer{
+    public function getProxy(): ProxyServer
+    {
         return $this->proxyServer;
     }
 
     /**
      * @return null|InternetAddress
      */
-    public function getAddress() : ?InternetAddress{
+    public function getAddress(): ?InternetAddress
+    {
         return $this->address;
     }
 
     /**
      * @param InternetAddress $address
      */
-    public function setAddress(InternetAddress $address){
+    public function setAddress(InternetAddress $address)
+    {
         $this->address = $address;
     }
 
     /**
      * @param DataPacket $pk
      */
-    public function dataPacket(DataPacket $pk){
+    public function dataPacket(DataPacket $pk)
+    {
         $this->getProxy()->getPacketSession()->writeDataPacket($pk, $this);
     }
 
     /**
      * @param string $buffer
      */
-    public function sendPacket(string $buffer){
+    public function sendPacket(string $buffer)
+    {
         $this->getProxy()->writePacket($buffer, $this->address->ip, $this->address->port);
     }
 

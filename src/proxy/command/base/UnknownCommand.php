@@ -13,7 +13,8 @@ use proxy\command\sender\Sender;
  * Class UnknownCommand
  * @package proxy\command\base
  */
-class UnknownCommand extends Command {
+class UnknownCommand extends Command
+{
 
     /**
      * @param Sender $sender
@@ -21,8 +22,9 @@ class UnknownCommand extends Command {
      *
      * @return bool $sendHasNotPerms
      */
-    public function execute(Sender $sender, array $args): bool {
-        if($sender instanceof ConsoleCommandSender) {
+    public function execute(Sender $sender, array $args): bool
+    {
+        if ($sender instanceof ConsoleCommandSender) {
             $sender->sendMessage(Terminal::$COLOR_RED . "Unknown command. Try 'help' to get list of all commands.");
             return true;
         }

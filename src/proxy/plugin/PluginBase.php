@@ -9,7 +9,8 @@ use proxy\ProxyServer;
  * Class PluginBase
  * @package proxy\plugin
  */
-abstract class PluginBase implements PluginInterface {
+abstract class PluginBase implements PluginInterface
+{
 
     /** @var ProxyServer $description */
     private $proxyServer;
@@ -26,26 +27,26 @@ abstract class PluginBase implements PluginInterface {
     /**
      * @return void
      */
-    public function onEnable(): void {}
+    public function onEnable(): void{}
 
     /**
      * @return void
      */
-    public function onDisable(): void {}
-
-    /**
-     * @param DataPacket $packet
-     *
-     * @return void
-     */
-    public function handlePacketReceive(DataPacket $packet): void {}
+    public function onDisable(): void{}
 
     /**
      * @param DataPacket $packet
      *
      * @return void
      */
-    public function handlePacketSend(DataPacket $packet): void {}
+    public function handlePacketReceive(DataPacket $packet): void{}
+
+    /**
+     * @param DataPacket $packet
+     *
+     * @return void
+     */
+    public function handlePacketSend(DataPacket $packet): void{}
 
     /**
      * @param Sender $client
@@ -54,13 +55,14 @@ abstract class PluginBase implements PluginInterface {
      *
      * @return void
      */
-    public function onCommand(Sender $client, string $command, array $args): void {}
+    public function onCommand(Sender $client, string $command, array $args): void{}
 
 
     /**
      * @return bool
      */
-    public function isEnabled(): bool{
+    public function isEnabled(): bool
+    {
         return $this->isEnabled;
     }
 
@@ -68,22 +70,25 @@ abstract class PluginBase implements PluginInterface {
      * @param bool $isEnabled
      * @param bool $callDisable
      */
-    public function setEnabled(bool $isEnabled, $callDisable = true): void{
+    public function setEnabled(bool $isEnabled, $callDisable = true): void
+    {
         $this->isEnabled = $isEnabled;
-        if($callDisable)$this->onDisable();
+        if ($callDisable) $this->onDisable();
     }
 
     /**
      * @return PluginDescription
      */
-    public function getDescription(): PluginDescription{
+    public function getDescription(): PluginDescription
+    {
         return $this->description;
     }
 
     /**
      * @return bool
      */
-    public function isInitialized(): bool{
+    public function isInitialized(): bool
+    {
         return $this->initialized;
     }
 
@@ -92,7 +97,8 @@ abstract class PluginBase implements PluginInterface {
      * @param ProxyServer $proxyServer
      * @param PluginDescription $description
      */
-    public function init(ProxyServer $proxyServer, PluginDescription $description) {
+    public function init(ProxyServer $proxyServer, PluginDescription $description)
+    {
         $this->proxyServer = $proxyServer;
         $this->description = $description;
         $this->initialized = true;
@@ -102,14 +108,16 @@ abstract class PluginBase implements PluginInterface {
     /**
      * @return ProxyServer
      */
-    public function getProxy(): ProxyServer{
+    public function getProxy(): ProxyServer
+    {
         return $this->proxyServer;
     }
 
     /**
      * @return ProxyClient
      */
-    public function getClient(): ProxyClient{
+    public function getClient(): ProxyClient
+    {
         return $this->getProxy()->getClient();
     }
 }

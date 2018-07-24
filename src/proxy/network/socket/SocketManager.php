@@ -11,7 +11,8 @@ use proxy\utils\AsyncLogger;
  * Class SocketManager
  * @package proxy\network
  */
-class SocketManager extends \Thread {
+class SocketManager extends \Thread
+{
 
     /** @var ProxyServer $server */
     public $server;
@@ -33,7 +34,8 @@ class SocketManager extends \Thread {
      * @param ProxyServer $server
      * @param array $connection
      */
-    public function __construct(ProxyServer $server, array $connection) {
+    public function __construct(ProxyServer $server, array $connection)
+    {
         $this->server = $server;
         $this->connection = $connection;
     }
@@ -43,12 +45,14 @@ class SocketManager extends \Thread {
      * @param $address
      * @param $port
      */
-    public function addPacketToSendQueue($buffer, $address, $port) {
+    public function addPacketToSendQueue($buffer, $address, $port)
+    {
         $this->toSend[] = [$buffer, $address, $port];
     }
 
 
-    public function run() {
+    public function run()
+    {
         // classloader ._.
         require COMPOSER;
         // logger
@@ -62,10 +66,9 @@ class SocketManager extends \Thread {
         /** @var int $bindPort */
         $bindPort = (int)$this->connection["port"];
 
-        if($socket->bind($bindAddress, $bindPort)) {
+        if ($socket->bind($bindAddress, $bindPort)) {
             $logger->info("§aSuccessfully bind to {$bindAddress}:{$bindPort}");
-        }
-        else {
+        } else {
             $logger->error("§cFailed to bind socket on {$bindAddress}:{$bindPort}");
         }
 

@@ -8,7 +8,8 @@ namespace proxy\command;
  * Class CommandReader
  * @package proxy\command
  */
-class CommandReader extends \Thread {
+class CommandReader extends \Thread
+{
 
     /** @var CommandMap $commandMap */
     public $commandMap;
@@ -23,16 +24,18 @@ class CommandReader extends \Thread {
      * CommandReader constructor.
      * @param CommandMap $commandMap
      */
-    public function __construct(CommandMap $commandMap) {
+    public function __construct(CommandMap $commandMap)
+    {
         $this->commandMap = $commandMap;
         $this->buffer = new \Threaded;
     }
 
-    public function run() {
+    public function run()
+    {
         $resource = fopen("php://stdin", "r");
         while ($this->stop !== true) {
             $commandLine = trim(fgets($resource));
-            if($commandLine != "") {
+            if ($commandLine != "") {
                 $this->buffer[] = $commandLine;
             }
         }
@@ -41,7 +44,8 @@ class CommandReader extends \Thread {
     /**
      * @return CommandMap $commandMap
      */
-    public function getCommandMap(): CommandMap {
+    public function getCommandMap(): CommandMap
+    {
         return $this->commandMap;
     }
 }

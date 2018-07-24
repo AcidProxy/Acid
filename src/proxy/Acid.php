@@ -12,13 +12,13 @@ define("COMPOSER", "vendor/autoload.php");
 $extensions = ["pthreads", "sockets", "yaml"];
 
 foreach ($extensions as $extension) {
-    if(!extension_loaded($extension)) {
+    if (!extension_loaded($extension)) {
         echo "Could not start server: extension not found.";
         exit;
     }
 }
 
-if(!is_file(COMPOSER)){
+if (!is_file(COMPOSER)) {
     echo "Composer autoloader not found, install composer first." . PHP_EOL;
     exit;
 }
@@ -36,8 +36,7 @@ $all = $config->getAll();
 
 try {
     new ProxyServer((string)$all['server-ip'], (int)$all['server-port'], (int)$all['bind-port']);
-}
-catch (\Exception $exception){
+} catch (\Exception $exception) {
     echo "Could not start server:" . $exception->getMessage();
 }
 

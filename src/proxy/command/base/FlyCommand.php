@@ -13,7 +13,8 @@ use proxy\hosts\ProxyClient;
  * Class GamemodeCommand
  * @package proxy\command\base
  */
-class FlyCommand extends Command {
+class FlyCommand extends Command
+{
 
     /** @var CommandMap $commandMap */
     public $commandMap;
@@ -22,7 +23,8 @@ class FlyCommand extends Command {
      * GamemodeCommand constructor
      * @param CommandMap $commandMap
      */
-    public function __construct(CommandMap $commandMap) {
+    public function __construct(CommandMap $commandMap)
+    {
         parent::__construct("fly", "Switch flying mode");
         $this->commandMap = $commandMap;
     }
@@ -32,8 +34,9 @@ class FlyCommand extends Command {
      * @param array $args
      * @return bool
      */
-    public function execute(Sender $sender, array $args): bool {
-        if(!$sender instanceof ProxyClient) {
+    public function execute(Sender $sender, array $args): bool
+    {
+        if (!$sender instanceof ProxyClient) {
             $sender->sendMessage("§cThis command can be used only in game.");
             return true;
         }

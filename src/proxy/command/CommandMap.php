@@ -17,7 +17,8 @@ use proxy\ProxyServer;
  * Class CommandMap
  * @package proxy\command
  */
-class CommandMap {
+class CommandMap
+{
 
     /** @var Command[] $commands */
     private $commands = [];
@@ -35,14 +36,16 @@ class CommandMap {
      * CommandMap constructor.
      * @param ProxyServer $proxy
      */
-    public function __construct(ProxyServer $proxy) {
+    public function __construct(ProxyServer $proxy)
+    {
         $this->proxyServer = $proxy;
         $this->consoleCommandSender = new ConsoleCommandSender($this);
         $this->consoleCommandReader = new CommandReader($this);
         $this->registerBase();
     }
 
-    public function registerBase() {
+    public function registerBase()
+    {
         $this->registerCommand(new GamemodeCommand($this));
         $this->registerCommand(new HelpCommand($this));
         $this->registerCommand(new PluginsCommand($this));
@@ -53,18 +56,21 @@ class CommandMap {
     /**
      * @return array
      */
-    public function getCommands() : array{
+    public function getCommands(): array
+    {
         return $this->commands;
     }
 
     /**
      * @return ProxyServer $proxy
      */
-    public function getProxy(): ProxyServer{
+    public function getProxy(): ProxyServer
+    {
         return $this->proxyServer;
     }
 
-    public function tick() {
+    public function tick()
+    {
         foreach ($this->consoleCommandReader->buffer as $index => $commandLine) {
             $args = explode(" ", $commandLine);
             $name = $args[0];
@@ -80,8 +86,9 @@ class CommandMap {
      * @param string $name
      * @return null|\proxy\command\Command
      */
-    public function getCommand(string $name) : ?Command{
-        if(!isset($this->commands[$name])){
+    public function getCommand(string $name): ?Command
+    {
+        if (!isset($this->commands[$name])) {
             return new UnknownCommand($name);
         }
         return $this->commands[$name];
@@ -91,8 +98,9 @@ class CommandMap {
      * @param string $name
      * @return bool
      */
-    public function unregisterCommand(string $name) : bool{
-        if(!isset($this->commands[$name])){
+    public function unregisterCommand(string $name): bool
+    {
+        if (!isset($this->commands[$name])) {
             $this->getProxy()->getLogger()->error("Tried to unregister non-existing command");
             return false;
         }
@@ -104,8 +112,9 @@ class CommandMap {
      * @param Command $command
      * @return bool
      */
-    public function registerCommand(Command $command){
-        if(isset($this->commands[$command->getName()])){
+    public function registerCommand(Command $command)
+    {
+        if (isset($this->commands[$command->getName()])) {
             $this->getProxy()->getLogger()->error("Tried to register existing command");
             return false;
         }

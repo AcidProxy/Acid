@@ -7,12 +7,14 @@ namespace proxy\command\base;
 use proxy\command\Command;
 use proxy\command\CommandMap;
 use proxy\command\sender\Sender;
+use proxy\hosts\ProxyClient;
 
 /**
  * Class PluginsCommand
  * @package proxy\command\base
  */
-class PluginsCommand extends Command {
+class PluginsCommand extends Command
+{
 
     /** @var CommandMap $commandMap */
     public $commandMap;
@@ -21,7 +23,8 @@ class PluginsCommand extends Command {
      * PluginsCommand constructor.
      * @param CommandMap $commandMap
      */
-    public function __construct(CommandMap $commandMap) {
+    public function __construct(CommandMap $commandMap)
+    {
         $this->commandMap = $commandMap;
         parent::__construct("plugins", "Displays list of plugins");
     }
@@ -31,7 +34,12 @@ class PluginsCommand extends Command {
      * @param array $args
      * @return bool
      */
-    public function execute(Sender $sender, array $args): bool {
+    public function execute(Sender $sender, array $args): bool
+    {
+        if ($sender instanceof ProxyClient) {
+            $sender->sendMessage("§cThis command cannot be used in game.");
+            return true;
+        }
         $sender->sendMessage("§fPlugins: §a" . implode("§f, §a", array_keys($this->commandMap->getProxy()->getPluginManager()->getPlugins())));
         return true;
     }

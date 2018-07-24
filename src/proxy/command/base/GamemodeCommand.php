@@ -13,7 +13,8 @@ use proxy\command\sender\Sender;
  * Class GamemodeCommand
  * @package proxy\command\base
  */
-class GamemodeCommand extends Command {
+class GamemodeCommand extends Command
+{
 
     /** @var CommandMap $commandMap */
     public $commandMap;
@@ -22,7 +23,8 @@ class GamemodeCommand extends Command {
      * GamemodeCommand constructor
      * @param CommandMap $commandMap
      */
-    public function __construct(CommandMap $commandMap) {
+    public function __construct(CommandMap $commandMap)
+    {
         parent::__construct("gamemode", "Sets your game mode");
         $this->commandMap = $commandMap;
     }
@@ -32,16 +34,17 @@ class GamemodeCommand extends Command {
      * @param array $args
      * @return bool
      */
-    public function execute(Sender $sender, array $args): bool {
-        if($sender instanceof ConsoleCommandSender) {
+    public function execute(Sender $sender, array $args): bool
+    {
+        if ($sender instanceof ConsoleCommandSender) {
             $sender->sendMessage("§cThis command can be used only in game.");
             return true;
         }
-        if(!isset($args[0])) {
+        if (!isset($args[0])) {
             $sender->sendMessage("§cInvalid args");
             return true;
         }
-        if(!in_array($args[0], ["0", "1", "s", "c", "survival", "creative", "surv", "crea"])) {
+        if (!in_array($args[0], ["0", "1", "s", "c", "survival", "creative", "surv", "crea"])) {
             $sender->sendMessage("§cInvalid gamemode");
             return true;
         }

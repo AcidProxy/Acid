@@ -15,7 +15,8 @@ use raklib\protocol\Datagram;
 use raklib\protocol\EncapsulatedPacket;
 use raklib\protocol\NACK;
 
-class PacketSession {
+class PacketSession
+{
 
     const MAX_SPLIT_SIZE = 128;
     const MAX_SPLIT_COUNT = 4;
@@ -42,7 +43,8 @@ class PacketSession {
      * Pool constructor.
      * @param ProxyServer $proxyServer
      */
-    public function __construct(ProxyServer $proxyServer) {
+    public function __construct(ProxyServer $proxyServer)
+    {
         $this->proxyServer = $proxyServer;
         $this->sendSeqNumber = 0;
         $this->recoveryQueue = new \SplObjectStorage;
@@ -53,18 +55,17 @@ class PacketSession {
      *
      * @return null|DataPacket
      */
-    public function readDataPacket(string $buffer): ?DataPacket {
+    public function readDataPacket(string $buffer): ?DataPacket
+    {
         $pid = ord($buffer{0});
         if (($pid & Datagram::BITFLAG_VALID) !== 0) {
             if ($pid & Datagram::BITFLAG_ACK) {
                 $packet = new ACK($buffer);
                 $this->ACKs[] = $packet;
-            }
-            elseif ($pid & Datagram::BITFLAG_NAK) {
+            } elseif ($pid & Datagram::BITFLAG_NAK) {
                 $packet = new NACK($buffer);
                 $this->NACKs[] = $packet;
-            }
-            else {
+            } else {
                 if (($datagram = new Datagram($buffer)) instanceof Datagram) {
                     $datagram->decode();
                     //   $this->sendSeqNumber = $datagram->seqNumber;
@@ -91,26 +92,28 @@ class PacketSession {
      *
      * @return ACK
      */
-    public function forwardPacket(DataPacket $packet): ACK {
+    public function forwardPacket(DataPacket $packet): ACK
+    {
         $ack = new ACK();
         $ack->packets[] = $this->recoveryQueue[$packet];
         $ack->encode();
         return $ack;
     }
 
-    public function decodeSplit(EncapsulatedPacket $packet) : ?EncapsulatedPacket{
-        if($packet->splitCount >= static::MAX_SPLIT_SIZE or $packet->splitIndex >= static::MAX_SPLIT_SIZE or $packet->splitIndex < 0){
+    public function decodeSplit(EncapsulatedPacket $packet): ?EncapsulatedPacket
+    {
+        if ($packet->splitCount >= static::MAX_SPLIT_SIZE or $packet->splitIndex >= static::MAX_SPLIT_SIZE or $packet->splitIndex < 0) {
             return null;
         }
-        if(!isset($this->splitPackets[$packet->splitID])){
-            if(count($this->splitPackets) >= static::MAX_SPLIT_COUNT){
+        if (!isset($this->splitPackets[$packet->splitID])) {
+            if (count($this->splitPackets) >= static::MAX_SPLIT_COUNT) {
                 return null;
             }
             $this->splitPackets[$packet->splitID] = [$packet->splitIndex => $packet];
-        }else{
+        } else {
             $this->splitPackets[$packet->splitID][$packet->splitIndex] = $packet;
         }
-        if(count($this->splitPackets[$packet->splitID]) === $packet->splitCount){
+        if (count($this->splitPackets[$packet->splitID]) === $packet->splitCount) {
             $pk = new EncapsulatedPacket;
             $pk->buffer = "";
             $pk->reliability = $packet->reliability;
@@ -118,7 +121,7 @@ class PacketSession {
             $pk->sequenceIndex = $packet->sequenceIndex;
             $pk->orderIndex = $packet->orderIndex;
             $pk->orderChannel = $packet->orderChannel;
-            for($i = 0; $i < $packet->splitCount; ++$i){
+            for ($i = 0; $i < $packet->splitCount; ++$i) {
                 $pk->buffer .= $this->splitPackets[$packet->splitID][$i]->buffer;
             }
 
@@ -136,7 +139,8 @@ class PacketSession {
      *
      * @return void
      */
-    public  function writeDataPacket(DataPacket $packet, BaseHost $baseHost): void {
+    public function writeDataPacket(DataPacket $packet, BaseHost $baseHost): void
+    {
         $batch = new BatchPacket();
         $batch->addPacket($packet);
         $batch->setCompressionLevel(7);
@@ -149,6 +153,7 @@ class PacketSession {
         $offset += 3;
         $encapsulated->orderChannel = ord($encapsulated->buffer{$offset++});
         $encapsulated->messageIndex = Binary::readLTriad(substr($encapsulated->buffer, $offset, 3));
+        $ofset += 3;
         $encapsulated->sequenceIndex = Binary::readLTriad(substr($encapsulated->buffer, $offset, 3));
         $dataPacket = new Datagram;
         $dataPacket->seqNumber = $this->sendSeqNumber++;
@@ -159,18 +164,18 @@ class PacketSession {
     }
 
 
-
     /**
      * @param EncapsulatedPacket $encapsulatedPacket
      *
      * @return null|DataPacket
      */
-    public function decodeBatch(EncapsulatedPacket $encapsulatedPacket) {
-        if(($batch = PacketPool::getPacket($encapsulatedPacket->buffer)) instanceof BatchPacket){
+    public function decodeBatch(EncapsulatedPacket $encapsulatedPacket)
+    {
+        if (($batch = PacketPool::getPacket($encapsulatedPacket->buffer)) instanceof BatchPacket) {
             /** @var BatchPacket $batch */
             @$batch->decode();
-            if($batch->payload !== "" && is_string($batch->payload)){
-                foreach($batch->getPackets() as $buf){
+            if ($batch->payload !== "" && is_string($batch->payload)) {
+                foreach ($batch->getPackets() as $buf) {
                     return PacketPool::getPacket($buf);
                 }
             }

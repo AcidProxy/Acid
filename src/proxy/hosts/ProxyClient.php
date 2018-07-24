@@ -22,7 +22,8 @@ use proxy\ProxyServer;
  * Class ProxyClient
  * @package proxy\hosts
  */
-class ProxyClient extends BaseHost implements Sender {
+class ProxyClient extends BaseHost implements Sender
+{
 
     /** @var ProxyServer $proxyServer */
     private $proxyServer;
@@ -49,23 +50,91 @@ class ProxyClient extends BaseHost implements Sender {
     private $fly = false;
 
     /**
+     * @var bool $loggedIn
+     */
+    private $loggedIn = false;
+
+    /**
+     * @var int $lastPacket
+     */
+    private $lastPacket;
+
+    /**
+     * @var string $xuid
+     */
+    private $xuid;
+
+    const SURVIVAL = 0;
+    const CREATIVE = 1;
+    const ADVENTURE = 2;
+
+    const CLIENT_TIMEOUT_LIMIT = 4;
+
+
+    /**
      * ProxyClient constructor.
      * @param ProxyServer $proxyServer
      */
-    public function __construct(ProxyServer $proxyServer) {
+    public function __construct(ProxyServer $proxyServer)
+    {
         $this->proxyServer = $proxyServer;
         $this->networkSession = new ClientNetworkSession($this, $proxyServer);
         parent::__construct($proxyServer);
     }
 
     /**
+     * @return bool
+     */
+    public function isLogged(): bool
+    {
+        return $this->loggedIn;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getXuid() : ?string{
+        return $this->xuid;
+    }
+
+    /**
+     * @return void
+     */
+    public function timeout(): void
+    {
+        $this->getProxy()->getLogger()->info(TextFormat::AQUA . "[" . $this->username . TextFormat::GREEN . " XUID: " . $this->xuid . TextFormat::AQUA . "] " . TextFormat::WHITE . "has logged out due to disconnect");
+        $this->setConnected(false);
+    }
+
+    /**
+     * @param int $time
+     *
+     * don't mess up with this
+     */
+    public function setLastPacket(int $time): void
+    {
+        $this->lastPacket = $time;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getLastPacket(): ?int
+    {
+        return $this->lastPacket;
+    }
+
+    /**
      * @param LoginPacket $loginPacket
      */
-    public function handleLogin(LoginPacket $loginPacket){
-        if(!$this->hasValidUsername($loginPacket->username)){
+    public function handleLogin(LoginPacket $loginPacket)
+    {
+        if (!$this->hasValidUsername($loginPacket->username)) {
             $this->close("Invalid username");
             return;
         }
+        $this->loggedIn = true;
+        $this->xuid = $loginPacket->xuid;
         $this->username = TextFormat::clean($loginPacket->username);
     }
 
@@ -73,14 +142,16 @@ class ProxyClient extends BaseHost implements Sender {
      * @param string $username
      * @return bool
      */
-    public function hasValidUsername(string $username): bool {
+    public function hasValidUsername(string $username): bool
+    {
         return strlen($username) > 1 && strlen($username) <= 16 && $username !== "rcon" && $username !== "console";
     }
 
     /**
      * @param string $message
      */
-    public function close(string $message): void {
+    public function close(string $message): void
+    {
         $pk = new DisconnectPacket();
         $pk->message = $message;
         $this->getProxy()->getPacketSession()->writeDataPacket($pk, $this);
@@ -93,7 +164,8 @@ class ProxyClient extends BaseHost implements Sender {
      *
      * @return void
      */
-    public function sendMessage(string $message): void {
+    public function sendMessage(string $message): void
+    {
         $pk = new TextPacket();
         $pk->type = TextPacket::TYPE_RAW;
         $pk->message = $message;
@@ -105,7 +177,8 @@ class ProxyClient extends BaseHost implements Sender {
      *
      * @return void
      */
-    public function sendPopup(string $message): void {
+    public function sendPopup(string $message): void
+    {
         $pk = new TextPacket();
         $pk->type = TextPacket::TYPE_POPUP;
         $pk->message = $message;
@@ -117,7 +190,8 @@ class ProxyClient extends BaseHost implements Sender {
      *
      * @return void
      */
-    public function sendTip(string $message): void {
+    public function sendTip(string $message): void
+    {
         $pk = new TextPacket();
         $pk->type = TextPacket::TYPE_TIP;
         $pk->message = $message;
@@ -127,7 +201,8 @@ class ProxyClient extends BaseHost implements Sender {
     /**
      * @param string $message
      */
-    public function sendWhisper(string $message): void {
+    public function sendWhisper(string $message): void
+    {
         $pk = new TextPacket();
         $pk->type = TextPacket::TYPE_WHISPER;
         $pk->message = $message;
@@ -138,70 +213,80 @@ class ProxyClient extends BaseHost implements Sender {
     /**
      * @return ClientNetworkSession
      */
-    public function getNetworkSession() : ClientNetworkSession{
+    public function getNetworkSession(): ClientNetworkSession
+    {
         return $this->networkSession;
     }
 
     /**
      * @return bool
      */
-    public function isConnected() : bool{
+    public function isConnected(): bool
+    {
         return $this->isConnected;
     }
 
     /**
      * @param bool $isConnected
      */
-    public function setConnected(bool $isConnected){
+    public function setConnected(bool $isConnected)
+    {
         $this->isConnected = $isConnected;
     }
 
     /**
      * @return string
      */
-    public function getName(): ?string{
+    public function getName(): ?string
+    {
         return $this->username;
     }
 
     /**
      * @return float $x
      */
-    public function getX(): float{
+    public function getX(): float
+    {
         return $this->position->x;
     }
 
     /**
      * @return float $y
      */
-    public function getY(): float {
+    public function getY(): float
+    {
         return $this->position->y;
     }
 
     /**
      * @return float $z
      */
-    public function getZ(): float{
+    public function getZ(): float
+    {
         return $this->position->z;
     }
 
     /**
      * @return Vector3 $position
      */
-    public function asVector3(): Vector3 {
+    public function asVector3(): Vector3
+    {
         return new Vector3($this->getX(), $this->getY(), $this->getZ());
     }
 
     /**
      * @param Vector3 $position
      */
-    public function setPosition(Vector3 $position) {
+    public function setPosition(Vector3 $position)
+    {
         $this->position = $position;
     }
 
     /**
      * @return int
      */
-    public function getGamemode(): int {
+    public function getGamemode(): int
+    {
         return $this->gamemode;
     }
 
@@ -209,9 +294,10 @@ class ProxyClient extends BaseHost implements Sender {
      * @param int $gamemode
      * @param bool $send
      */
-    public function setGamemode(int $gamemode, bool $send = true) {
+    public function setGamemode(int $gamemode, bool $send = true)
+    {
         $this->gamemode = $gamemode;
-        if($send){
+        if ($send) {
             $pk = new SetPlayerGameTypePacket();
             $pk->gamemode = $gamemode;
             $this->getProxy()->getPacketSession()->writeDataPacket($pk, $this);
@@ -221,21 +307,24 @@ class ProxyClient extends BaseHost implements Sender {
     /**
      * @param int $eid
      */
-    public function setEntityRuntimeId(int $eid) {
+    public function setEntityRuntimeId(int $eid)
+    {
         $this->eid = $eid;
     }
 
     /**
      * @return int $eid
      */
-    public function getEntityRuntimeId(): int {
+    public function getEntityRuntimeId(): int
+    {
         return (int)$this->eid;
     }
 
     /**
      * @param int $maxHealth
      */
-    public function setMaxHealth(int $maxHealth) {
+    public function setMaxHealth(int $maxHealth)
+    {
         $attribute = Attribute::getAttribute(Attribute::HEALTH);
         $attribute->setValue($maxHealth);
 
@@ -249,7 +338,8 @@ class ProxyClient extends BaseHost implements Sender {
     /**
      * @param int $food
      */
-    public function setFood(int $food) {
+    public function setFood(int $food)
+    {
         $attribute = Attribute::getAttribute(Attribute::FOOD);
         $attribute->setValue($food);
 
@@ -266,9 +356,10 @@ class ProxyClient extends BaseHost implements Sender {
      *
      * @return bool $canFly
      */
-    public function setAllowFly(bool $fly = true, bool $send = true): bool {
+    public function setAllowFly(bool $fly = true, bool $send = true): bool
+    {
         $this->fly = $fly;
-        if($send) {
+        if ($send) {
             $pk = new AdventureSettingsPacket();
             $pk->setFlag(AdventureSettingsPacket::ALLOW_FLIGHT, $fly);
             $pk->commandPermission = AdventureSettingsPacket::PERMISSION_OPERATOR;
@@ -283,7 +374,8 @@ class ProxyClient extends BaseHost implements Sender {
     /**
      * @return bool $canFly
      */
-    public function getAllowFly(): bool {
+    public function getAllowFly(): bool
+    {
         return $this->fly;
     }
 

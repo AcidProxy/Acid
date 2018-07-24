@@ -49,14 +49,16 @@ class ClientNetworkSession
     /**
      * @return ProxyServer
      */
-    public function getProxy() : ProxyServer{
+    public function getProxy(): ProxyServer
+    {
         return $this->proxyServer;
     }
 
     /**
      * @return ProxyClient
      */
-    public function getClient() : ProxyClient{
+    public function getClient(): ProxyClient
+    {
         return $this->client;
     }
 
@@ -64,7 +66,8 @@ class ClientNetworkSession
      * @param DataPacket $packet
      * @return bool
      */
-    public function handleClientDataPacket(DataPacket $packet): bool {
+    public function handleClientDataPacket(DataPacket $packet): bool
+    {
         $packet->decode();
         if (!$packet->feof() && !$packet->mayHaveUnreadBytes()) {
             $remains = substr($packet->buffer, $packet->offset);
@@ -93,25 +96,15 @@ class ClientNetworkSession
                 $this->getClient()->setEntityRuntimeId($packet->entityRuntimeId);
                 break;
             case TextPacket::NETWORK_ID:
-                $cmd = "*/";
+                $cmd = ".";
                 /** @var TextPacket $packet */
                 if ($packet->type == TextPacket::TYPE_CHAT) {
-                    if(substr($packet->message, 0, 2) == $cmd) {
-                        $args = explode(" ", substr($packet->message, 2));
+                    if (substr($packet->message, 0, 1) == $cmd) {
+                        $args = explode(" ", substr($packet->message, 1));
                         $commandName = $args[0];
                         array_shift($args);
                         $this->getProxy()->getCommandMap()->getCommand($commandName)->execute($this->getClient(), $args);
                     }
-                    /*
-                     * TOO SLOW WAY
-                    foreach ($this->getProxy()->getCommandMap()->getCommands() as $command => $object) {
-                        $args = explode(" ", $packet->message);
-                        if (strtolower($args[0]) == "*./" . strtolower($command)) {
-                            $object->execute($this->getClient(), $args);
-                        } elseif (strpos($cmd, $packet->message) !== false) {
-                            $this->getClient()->sendMessage("• " . TextFormat::AQUA . "Unknown command issued. Type " . TextFormat::WHITE . "*./help " . TextFormat::AQUA . " for list of all commands");
-                        }
-                    }*/
                 }
                 break;
         }
@@ -129,19 +122,20 @@ class ClientNetworkSession
     /**
      * @param DataPacket $packet
      */
-    public function handleServerDataPacket(DataPacket $packet){
+    public function handleServerDataPacket(DataPacket $packet)
+    {
         $packets = [SetPlayerGameTypePacket::NETWORK_ID, StartGamePacket::NETWORK_ID];
-        switch($packet::NETWORK_ID){
+        switch ($packet::NETWORK_ID) {
             case TextPacket::NETWORK_ID;
                 /** @var TextPacket $packet */
-                 $packet->decode();
-                 if($packet->type == TextPacket::TYPE_RAW ||
+                $packet->decode();
+                if ($packet->type == TextPacket::TYPE_RAW ||
                     $packet->type == TextPacket::TYPE_SYSTEM ||
                     $packet->type == TextPacket::TYPE_TRANSLATION ||
-                    $packet->type == TextPacket::TYPE_ANNOUNCEMENT){
-                     $this->getProxy()->getLogger()->info($packet->message);
-                 }
-                 break;
+                    $packet->type == TextPacket::TYPE_ANNOUNCEMENT) {
+                    $this->getProxy()->getLogger()->info($packet->message);
+                }
+                break;
             case SetPlayerGameTypePacket::NETWORK_ID;
                 /** @var SetPlayerGameTypePacket $packet */
                 $packet->decode();
@@ -150,16 +144,16 @@ class ClientNetworkSession
             case StartGamePacket::NETWORK_ID;
                 /** @var StartGamePacket $packet */
                 $packet->decode();
-                if($packet->worldGamemode === null) {
+                if ($packet->worldGamemode === null) {
                     $this->getClient()->setGamemode(1, false);
                     break;
                 }
                 $this->getClient()->setGamemode($packet->worldGamemode, false);
-            break;
+                break;
         }
         /** @var PluginBase $plugin */
-        foreach($this->getProxy()->getPluginManager()->getPlugins() as $plugin){
-            if($plugin->isEnabled()){
+        foreach ($this->getProxy()->getPluginManager()->getPlugins() as $plugin) {
+            if ($plugin->isEnabled()) {
                 $plugin->handlePacketReceive($packet);
             }
         }

@@ -8,7 +8,8 @@ namespace proxy\network\socket;
  * Class ProxySocket
  * @package proxy\network
  */
-class ProxySocket  {
+class ProxySocket
+{
 
     /** @var SocketManager $socketMgr */
     public $socketMgr;
@@ -20,7 +21,8 @@ class ProxySocket  {
      * ProxySocket constructor.
      * @param SocketManager $socketMgr
      */
-    public function __construct(SocketManager $socketMgr) {
+    public function __construct(SocketManager $socketMgr)
+    {
         $this->socketMgr = $socketMgr;
     }
 
@@ -29,7 +31,8 @@ class ProxySocket  {
      * @param int $type
      * @param int $protocol
      */
-    public function create(int $domain, int $type, int $protocol) {
+    public function create(int $domain, int $type, int $protocol)
+    {
         $this->socket = socket_create($domain, $type, $protocol);
     }
 
@@ -39,7 +42,8 @@ class ProxySocket  {
      *
      * @return bool
      */
-    public function bind(string $address, int $port): bool {
+    public function bind(string $address, int $port): bool
+    {
         return (bool)socket_bind($this->socket, $address, $port);
     }
 
@@ -48,19 +52,22 @@ class ProxySocket  {
      * @param int $option
      * @param $value
      */
-    public function setOption(int $level, int $option, $value) {
+    public function setOption(int $level, int $option, $value)
+    {
         socket_set_option($this->socket, $level, $option, $value);
     }
 
-    public function send() {
+    public function send()
+    {
         foreach ($this->socketMgr->toSend as $index => [$buffer, $address, $port]) {
             @socket_sendto($this->socket, $buffer, strlen($buffer), 0, $address, $port);
             unset($this->socketMgr->toSend[$index]);
         }
     }
 
-    public function receive() {
-        if(@socket_recvfrom($this->socket, $buffer, 65535, 0, $address, $port) && is_string($buffer) && strlen($buffer) > 2) {
+    public function receive()
+    {
+        if (@socket_recvfrom($this->socket, $buffer, 65535, 0, $address, $port) && is_string($buffer) && strlen($buffer) > 2) {
             $this->socketMgr->received[] = [$buffer, $address, $port];
         }
     }

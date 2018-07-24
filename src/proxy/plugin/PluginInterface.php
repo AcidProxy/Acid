@@ -11,12 +11,13 @@ use proxy\command\sender\Sender;
  * Interface PluginInterface
  * @package proxy\plugin
  */
-interface PluginInterface {
+interface PluginInterface
+{
 
     /**
      * @return void
      */
-    public function onEnable() : void;
+    public function onEnable(): void;
 
     /**
      * @return void
@@ -24,12 +25,12 @@ interface PluginInterface {
      * Not works!
      * TODO: Fix
      */
-    public function onDisable() : void;
+    public function onDisable(): void;
 
     /**
      * @return bool $isEnabled
      */
-    public function isEnabled() : bool;
+    public function isEnabled(): bool;
 
     /**
      * @param bool $isEnabled
@@ -37,21 +38,21 @@ interface PluginInterface {
      *
      * @return void
      */
-    public function setEnabled(bool $isEnabled, $callDisable = true) : void;
+    public function setEnabled(bool $isEnabled, $callDisable = true): void;
 
     /**
      * @param DataPacket $packet
      *
      * @return void
      */
-    public function handlePacketReceive(DataPacket $packet) : void;
+    public function handlePacketReceive(DataPacket $packet): void;
 
     /**
      * @param DataPacket $packet
      *
      * @return void
      */
-    public function handlePacketSend(DataPacket $packet) : void;
+    public function handlePacketSend(DataPacket $packet): void;
 
     /**
      * @param Sender $client
@@ -60,5 +61,5 @@ interface PluginInterface {
      *
      * @return void
      */
-    public function onCommand(Sender $client, string $command, array $args) : void;
+    public function onCommand(Sender $client, string $command, array $args): void;
 }

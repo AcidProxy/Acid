@@ -13,7 +13,8 @@ use proxy\command\sender\Sender;
  * Class HelpCommand
  * @package proxy\command\base
  */
-class HelpCommand extends Command {
+class HelpCommand extends Command
+{
 
     /** @var CommandMap $commandMap */
     public $commandMap;
@@ -22,7 +23,8 @@ class HelpCommand extends Command {
      * HelpCommand constructor.
      * @param CommandMap $commandMap
      */
-    public function __construct(CommandMap $commandMap) {
+    public function __construct(CommandMap $commandMap)
+    {
         parent::__construct("help", "Shows all registered commands");
         $this->commandMap = $commandMap;
     }
@@ -32,19 +34,21 @@ class HelpCommand extends Command {
      * @param array $args
      * @return bool
      */
-    public function execute(Sender $sender, array $args): bool {
+    public function execute(Sender $sender, array $args): bool
+    {
         $list = $this->commandMap->getCommands();
-        $msg = ["§f--- All AcidProxy commands: ---"];
+        $msg = [str_repeat("§e#", 40)];
 
-        $prefix = $sender instanceof ConsoleCommandSender ? "" : "*/";
+        $prefix = $sender instanceof ConsoleCommandSender ? "" : ".";
 
         /**
          * @var string $name
          * @var Command $object
          */
         foreach ($list as $name => $object) {
-            $msg[] = "§2{$prefix}{$name} §f{$object->getDescription()}";
+            $msg[] = "§e• §b{$prefix}{$name} §f{$object->getDescription()}";
         }
+        $msg[] = $msg[0];
 
         $sender->sendMessage(implode(PHP_EOL, $msg));
         return true;

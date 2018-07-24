@@ -11,7 +11,8 @@ use proxy\plugin\PluginInterface;
  * Class PluginCommand
  * @package proxy\command
  */
-class PluginCommand extends Command {
+class PluginCommand extends Command
+{
 
     /** @var PluginInterface $owningPlugin */
     private $owningPlugin;
@@ -22,7 +23,8 @@ class PluginCommand extends Command {
      * @param null $usageMessage
      * @param PluginInterface $owningPlugin
      */
-    public function __construct($name, $usageMessage = null, PluginInterface $owningPlugin) {
+    public function __construct($name, $usageMessage = null, PluginInterface $owningPlugin)
+    {
         $this->owningPlugin = $owningPlugin;
         parent::__construct($name, $usageMessage);
     }
@@ -30,7 +32,8 @@ class PluginCommand extends Command {
     /**
      * @return PluginInterface $plugin
      */
-    public function getOwningPlugin(): PluginInterface{
+    public function getOwningPlugin(): PluginInterface
+    {
         return $this->owningPlugin;
     }
 
@@ -41,7 +44,8 @@ class PluginCommand extends Command {
      * @return bool
      * why bool? o_O
      */
-    public function execute(Sender $sender, array $args): bool {
+    public function execute(Sender $sender, array $args): bool
+    {
         $this->getOwningPlugin()->onCommand($sender, $this->getName(), $args);
         return true;
     }

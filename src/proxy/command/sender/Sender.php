@@ -8,7 +8,8 @@ namespace proxy\command\sender;
  * Interface Sender
  * @package proxy\command\sender
  */
-interface Sender {
+interface Sender
+{
 
     /**
      * @param string $message

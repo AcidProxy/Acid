@@ -28,20 +28,24 @@ class Session
     /**
      * @return InternetAddress
      */
-    public function getAddress() : InternetAddress{
+    public function getAddress(): InternetAddress
+    {
         return $this->address;
     }
+
     /**
      * @return bool
      */
-    public function isConnected() : bool{
+    public function isConnected(): bool
+    {
         return $this->isConnected;
     }
 
     /**
      * @param bool $isConnected
      */
-    public function setConnected(bool $isConnected){
+    public function setConnected(bool $isConnected)
+    {
         $this->isConnected = $isConnected;
     }
 

@@ -32,14 +32,16 @@ class TargetServer extends BaseHost
     /**
      * @param array $iformation
      */
-    public function setInformation(array $iformation){
+    public function setInformation(array $iformation)
+    {
         $this->information = $iformation;
     }
 
     /**
      * @return array
      */
-    public function getInformation() : array {
+    public function getInformation(): array
+    {
         return $this->information;
     }
 }
