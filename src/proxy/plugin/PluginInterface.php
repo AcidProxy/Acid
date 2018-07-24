@@ -1,37 +1,64 @@
 <?php
 
+declare(strict_types=1);
+
 namespace proxy\plugin;
 
-
 use pocketmine\network\mcpe\protocol\DataPacket;
-use proxy\hosts\Client;
-use proxy\hosts\ProxyClient;
+use proxy\command\sender\Sender;
 
-interface PluginInterface
-{
+/**
+ * Interface PluginInterface
+ * @package proxy\plugin
+ */
+interface PluginInterface {
 
     /**
-     * @return mixed
+     * @return void
      */
     public function onEnable() : void;
 
     /**
-     * @return mixed
+     * @return void
      *
-     * Not executed on proxy stop!
+     * Not works!
+     * TODO: Fix
      */
     public function onDisable() : void;
 
+    /**
+     * @return bool $isEnabled
+     */
     public function isEnabled() : bool;
 
+    /**
+     * @param bool $isEnabled
+     * @param bool $callDisable
+     *
+     * @return void
+     */
     public function setEnabled(bool $isEnabled, $callDisable = true) : void;
 
+    /**
+     * @param DataPacket $packet
+     *
+     * @return void
+     */
     public function handlePacketReceive(DataPacket $packet) : void;
 
+    /**
+     * @param DataPacket $packet
+     *
+     * @return void
+     */
     public function handlePacketSend(DataPacket $packet) : void;
 
-    public function onCommand(ProxyClient $client, string $command, array $args) : void;
-
-
-
+    /**
+     * @param Sender $client
+     * @param string $command
+     * @param array $args
+     *
+     * @return void
+     */
+    public function onCommand(Sender $client, string $command, array $args) : void;
 }

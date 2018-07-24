@@ -1,7 +1,8 @@
 <?php
 
-namespace proxy\utils;
+declare(strict_types=1);
 
+namespace proxy\utils;
 
 use pocketmine\network\mcpe\protocol\BatchPacket;
 use pocketmine\network\mcpe\protocol\DataPacket;
@@ -13,43 +14,29 @@ use raklib\protocol\ACK;
 use raklib\protocol\Datagram;
 use raklib\protocol\EncapsulatedPacket;
 use raklib\protocol\NACK;
-use raklib\server\Session;
 
 class PacketSession {
 
     const MAX_SPLIT_SIZE = 128;
     const MAX_SPLIT_COUNT = 4;
 
-    /**
-     * @var int
-     */
+    /** @var int $sendSeqNumber */
     public $sendSeqNumber = 0;
 
-    /**
-     * @var \SplObjectStorage
-     */
+    /** @var \SplObjectStorage */
     private $recoveryQueue;
 
-
-    /**
-     * @var ProxyServer $proxyServer
-     */
+    /** @var ProxyServer $proxyServer */
     private $proxyServer;
 
     /** @var Datagram[][] */
     private $splitPackets = [];
 
-    /**
-     * @var ACK[] $ACKs
-     */
+    /** @var ACK[] $ACKs */
     private $ACKs = [];
 
-    /**
-     * @var NACK[] $NACKs
-     */
+    /** @var NACK[] $NACKs */
     private $NACKs = [];
-
-
 
     /**
      * Pool constructor.
@@ -63,29 +50,32 @@ class PacketSession {
 
     /**
      * @param string $buffer
+     *
      * @return null|DataPacket
      */
-    public function readDataPacket(string $buffer) : ?DataPacket{
+    public function readDataPacket(string $buffer): ?DataPacket {
         $pid = ord($buffer{0});
-        if(($pid & Datagram::BITFLAG_VALID) !== 0){
-            if($pid & Datagram::BITFLAG_ACK){
+        if (($pid & Datagram::BITFLAG_VALID) !== 0) {
+            if ($pid & Datagram::BITFLAG_ACK) {
                 $packet = new ACK($buffer);
                 $this->ACKs[] = $packet;
-            }elseif($pid & Datagram::BITFLAG_NAK){
+            }
+            elseif ($pid & Datagram::BITFLAG_NAK) {
                 $packet = new NACK($buffer);
                 $this->NACKs[] = $packet;
-            }else{
-                if(($datagram = new Datagram($buffer)) instanceof Datagram){
+            }
+            else {
+                if (($datagram = new Datagram($buffer)) instanceof Datagram) {
                     $datagram->decode();
-                 //   $this->sendSeqNumber = $datagram->seqNumber;
-                    foreach($datagram->packets as $packet){
-                        if($packet->hasSplit){
+                    //   $this->sendSeqNumber = $datagram->seqNumber;
+                    foreach ($datagram->packets as $packet) {
+                        if ($packet->hasSplit) {
                             $split = $this->decodeSplit($packet);
-                            if($split !== null){
+                            if ($split !== null) {
                                 $packet = $split;
                             }
                         }
-                        if(($pk = self::decodeBatch($packet)) !== null){
+                        if (($pk = self::decodeBatch($packet)) !== null) {
                             $this->recoveryQueue[$pk] = $datagram->seqNumber;
                             return $pk;
                         }
@@ -98,9 +88,10 @@ class PacketSession {
 
     /**
      * @param DataPacket $packet
+     *
      * @return ACK
      */
-    public function forwardPacket(DataPacket $packet) : ACK{
+    public function forwardPacket(DataPacket $packet): ACK {
         $ack = new ACK();
         $ack->packets[] = $this->recoveryQueue[$packet];
         $ack->encode();
@@ -142,8 +133,10 @@ class PacketSession {
     /**
      * @param DataPacket $packet
      * @param BaseHost $baseHost
+     *
+     * @return void
      */
-    public  function writeDataPacket(DataPacket $packet, BaseHost $baseHost) : void{
+    public  function writeDataPacket(DataPacket $packet, BaseHost $baseHost): void {
         $batch = new BatchPacket();
         $batch->addPacket($packet);
         $batch->setCompressionLevel(7);
@@ -169,10 +162,12 @@ class PacketSession {
 
     /**
      * @param EncapsulatedPacket $encapsulatedPacket
+     *
      * @return null|DataPacket
      */
-    public function decodeBatch(EncapsulatedPacket $encapsulatedPacket){
+    public function decodeBatch(EncapsulatedPacket $encapsulatedPacket) {
         if(($batch = PacketPool::getPacket($encapsulatedPacket->buffer)) instanceof BatchPacket){
+            /** @var BatchPacket $batch */
             @$batch->decode();
             if($batch->payload !== "" && is_string($batch->payload)){
                 foreach($batch->getPackets() as $buf){

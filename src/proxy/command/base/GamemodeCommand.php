@@ -58,6 +58,7 @@ class GamemodeCommand extends Command {
             case "creative":
                 $this->commandMap->getProxy()->getClient()->setGamemode(1);
         }
+        $sender->sendMessage("§aGamemode updated!");
         return true;
     }
 }

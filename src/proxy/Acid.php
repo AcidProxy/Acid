@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace proxy;
 
+use Composer\Autoload\ClassLoader;
 use pocketmine\utils\Config;
 
 define("COMPOSER", "vendor/autoload.php");
@@ -22,16 +23,15 @@ if(!is_file(COMPOSER)){
     exit;
 }
 
-// class loader
-require_once COMPOSER;
+/** @var ClassLoader $loader */
+$loader = require COMPOSER;
 
-$settings = [
+$config = new Config("config.yml", Config::YAML, [
     'server-ip' => 'pe.gameteam.cz', # sorry Honzo :D
     'server-port' => 19132,
     'bind-port' => 19132
-];
+]);
 
-$config = new Config("config.yml", Config::YAML, $settings);
 $all = $config->getAll();
 
 try {

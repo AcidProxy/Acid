@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace proxy;
 
+use pocketmine\entity\Attribute;
 use pocketmine\network\mcpe\protocol\PacketPool;
 use pocketmine\network\mcpe\protocol\TextPacket;
 use pocketmine\utils\TextFormat;
@@ -87,6 +88,7 @@ class ProxyServer {
         $this->commandMap = new CommandMap($this);
 
         PacketPool::init();
+        Attribute::init();
 
         $this->startThreadWorkers();
 
@@ -97,22 +99,34 @@ class ProxyServer {
         $this->tickProcessor();
     }
 
-    public function tickProcessor() : void {
+    /**
+     * @return void
+     */
+    public function tickProcessor(): void {
         while($this->running !== false) {
             $this->tick();
         }
     }
 
-    public function tick() : void {
+    /**
+     * @return void
+     */
+    public function tick(): void {
         $this->tickNetwork();
         $this->tickCommands();
     }
 
-    private function tickCommands() : void {
+    /**
+     * @return void
+     */
+    private function tickCommands(): void {
         $this->commandMap->tick();
     }
 
-    private function tickNetwork() : void {
+    /**
+     * @return void
+     */
+    private function tickNetwork(): void {
         foreach ($this->socketMgr->received as $index => $received) {
             /** @var string $buffer */
             $buffer = $received[0];
@@ -161,9 +175,10 @@ class ProxyServer {
     /**
      * @param string $buffer
      * @param BaseHost $host
+     *
      * @return null|string
      */
-    public function getPacket(string $buffer, BaseHost $host) : ?string {
+    public function getPacket(string $buffer, BaseHost $host): ?string {
         if(($packet = $this->packetSession->readDataPacket($buffer)) !== null){
             if($host instanceof ProxyClient){
                 $state = $this->getClient()->getNetworkSession()->handleClientDataPacket($packet);
@@ -181,8 +196,9 @@ class ProxyServer {
 
     /**
      * @param string $buffer
+     * @param InternetAddress $compareAddress
      */
-    private function handleRakNetPacket(string $buffer, InternetAddress $compareAddress) : void{
+    private function handleRakNetPacket(string $buffer, InternetAddress $compareAddress): void {
         switch(ord($buffer{0})){
             case UnconnectedPing::$ID;
                 if(!isset($this->sessionManager->clientSessions[gethostbyname($compareAddress->ip)])){
@@ -221,45 +237,49 @@ class ProxyServer {
         }
     }
 
-    private function startThreadWorkers() : void {
+    /**
+     * @return void
+     */
+    private function startThreadWorkers(): void {
         $this->socketMgr->start(PTHREADS_INHERIT_ALL);
         $this->commandMap->consoleCommandReader->start(PTHREADS_INHERIT_ALL);
         // main + socket + commands
         $this->getLogger()->info("§6Started 3 threads");
     }
 
-    public function stop() : void {
+    public function stop(): void {
         $this->running = false;
         $this->socketMgr->stop = true;
         $this->commandMap->consoleCommandReader->stop = true;
-        unset($this->socketMgr);
+        gc_collect_cycles();
+        exit;
     }
 
     /**
      * @return PluginManager
      */
-    public function getPluginManager() : PluginManager{
+    public function getPluginManager(): PluginManager {
         return $this->pluginManager;
     }
 
     /**
      * @return CommandMap
      */
-    public function getCommandMap() : CommandMap{
+    public function getCommandMap(): CommandMap {
         return $this->commandMap;
     }
 
     /**
      * @return SessionManager
      */
-    public function getSessionManager() : SessionManager{
+    public function getSessionManager(): SessionManager {
         return $this->sessionManager;
     }
 
     /**
      * @return ProxyClient
      */
-    public function getClient() : ProxyClient{
+    public function getClient(): ProxyClient {
         return $this->proxyClient;
     }
 

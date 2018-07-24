@@ -36,8 +36,6 @@ class SocketManager extends \Thread {
     public function __construct(ProxyServer $server, array $connection) {
         $this->server = $server;
         $this->connection = $connection;
-        #$this->received = new \Threaded;
-        #$this->toSend = new \Threaded;
     }
 
     /**

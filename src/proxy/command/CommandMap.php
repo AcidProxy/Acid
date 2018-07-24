@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace proxy\command;
 
+use proxy\command\base\FlyCommand;
+use proxy\command\base\GamemodeCommand;
+use proxy\command\base\HelpCommand;
+use proxy\command\base\PluginsCommand;
+use proxy\command\base\StopCommand;
 use proxy\command\base\UnknownCommand;
 use proxy\command\sender\ConsoleCommandSender;
 use proxy\ProxyServer;
@@ -18,7 +23,7 @@ class CommandMap {
     private $commands = [];
 
     /** @var ProxyServer $server */
-    private $server;
+    private $proxyServer;
 
     /** @var CommandReader $consoleCommandReader */
     public $consoleCommandReader;
@@ -28,12 +33,21 @@ class CommandMap {
 
     /**
      * CommandMap constructor.
-     * @param ProxyServer $server
+     * @param ProxyServer $proxy
      */
-    public function __construct(ProxyServer $server) {
-        $this->server = $server;
+    public function __construct(ProxyServer $proxy) {
+        $this->proxyServer = $proxy;
         $this->consoleCommandSender = new ConsoleCommandSender($this);
         $this->consoleCommandReader = new CommandReader($this);
+        $this->registerBase();
+    }
+
+    public function registerBase() {
+        $this->registerCommand(new GamemodeCommand($this));
+        $this->registerCommand(new HelpCommand($this));
+        $this->registerCommand(new PluginsCommand($this));
+        $this->registerCommand(new StopCommand($this));
+        $this->registerCommand(new FlyCommand($this));
     }
 
     /**
@@ -44,10 +58,10 @@ class CommandMap {
     }
 
     /**
-     * @return ProxyServer $server
+     * @return ProxyServer $proxy
      */
-    public function getServer() : ProxyServer{
-        return $this->server;
+    public function getProxy(): ProxyServer{
+        return $this->proxyServer;
     }
 
     public function tick() {
@@ -79,10 +93,23 @@ class CommandMap {
      */
     public function unregisterCommand(string $name) : bool{
         if(!isset($this->commands[$name])){
-            $this->getServer()->getLogger()->error("Tried to unregister non-existing command");
+            $this->getProxy()->getLogger()->error("Tried to unregister non-existing command");
             return false;
         }
         unset($this->commands[$name]);
+        return true;
+    }
+
+    /**
+     * @param Command $command
+     * @return bool
+     */
+    public function registerCommand(Command $command){
+        if(isset($this->commands[$command->getName()])){
+            $this->getProxy()->getLogger()->error("Tried to register existing command");
+            return false;
+        }
+        $this->commands[$command->getName()] = $command;
         return true;
     }
 

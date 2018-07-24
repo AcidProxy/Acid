@@ -14,20 +14,17 @@ abstract class Command {
     /** @var string $name */
     private $name;
 
-    /** @var string $usageMessage */
-    private $usageMessage;
-
     /** @var string $description */
     private $description;
 
     /**
      * Command constructor.
      * @param string $name
-     * @param string|null $usageMessage
+     * @param string|null $description
      */
-    public function __construct(string $name, string $usageMessage = null) {
+    public function __construct(string $name, ?string $description = null) {
         $this->name = $name;
-        $this->usageMessage = is_null($this->usageMessage) ? "" : $this->usageMessage;
+        $this->description = is_null($description) ? "" : $description;
     }
 
     /**
