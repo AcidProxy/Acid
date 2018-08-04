@@ -8,10 +8,10 @@
 	<a href="https://discord.gg/qrfKGp6k">
 		<img src="https://img.shields.io/badge/chat-on%20discord-blue.svg">
 	</a>
-	<a href="https://github.com/GamakCZ/Acid/blob/master/LICENSE">
+	<a href="https://github.com/AcidProxy/Acid/blob/master/LICENSE">
 		<img src="https://img.shields.io/badge/license-GPL-yellow.svg">
 	</a> 
-	<a href="https://github.com/GamakCZ/Acid/commit/0576720bb27303776b13e14b0b7ee52b5f2f607e">
+	<a href="https://github.com/AcidProxy/Acid/commit/0576720bb27303776b13e14b0b7ee52b5f2f607e">
 		<img src="https://img.shields.io/badge/MC%3ABE-1.5-green.svg">
 	</a> 
 
@@ -30,7 +30,7 @@
 
 1) Create folder for Acid Proxy
 2) [Download](https://jenkins.pmmp.io/job/PHP-7.2-Aggregate/lastSuccessfulBuild/artifact/PHP-7.2-Windows-x64.zip) and extract PHP to the created folder
-3) [Download](https://github.com/GamakCZ/Acid/archive/master.zip) and extract Acid proxy to the created folder
+3) [Download](https://github.com/AcidProxy/Acid/archive/master.zip) and extract Acid proxy to the created folder
 4) Run start.cmd script
 
 #### Linux:
@@ -38,7 +38,7 @@
 1)  Open command shell
 2) Run these commands:
 		`apt-get install git`
-		`git clone https://github.com/GamakCZ/Acid`
+		`git clone https://github.com/AcidProxy/Acid`
 		`cd Acid`
 		`chmod 777 ./start.sh`
 		`./start.sh`
