@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace proxy\command\sender;
 
 use proxy\command\CommandMap;
+use proxy\utils\Logger;
 
 /**
  * Class ConsoleCommandSender
@@ -30,7 +31,7 @@ class ConsoleCommandSender implements Sender
      */
     public function sendMessage(string $message)
     {
-        $this->getCommandMap()->getProxy()->getLogger()->info($message);
+        Logger::log($message);
     }
 
     /**

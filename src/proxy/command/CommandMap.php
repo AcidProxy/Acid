@@ -41,17 +41,8 @@ class CommandMap
         $this->proxyServer = $proxy;
         $this->consoleCommandSender = new ConsoleCommandSender($this);
         $this->consoleCommandReader = new CommandReader($this);
-        $this->registerBase();
     }
 
-    public function registerBase()
-    {
-        $this->registerCommand(new GamemodeCommand($this));
-        $this->registerCommand(new HelpCommand($this));
-        $this->registerCommand(new PluginsCommand($this));
-        $this->registerCommand(new StopCommand($this));
-        $this->registerCommand(new FlyCommand($this));
-    }
 
     /**
      * @return array

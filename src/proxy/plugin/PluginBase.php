@@ -108,7 +108,7 @@ abstract class PluginBase implements PluginInterface
     /**
      * @return ProxyServer
      */
-    public function getProxy(): ProxyServer
+    public function getServer(): ProxyServer
     {
         return $this->proxyServer;
     }
@@ -118,7 +118,7 @@ abstract class PluginBase implements PluginInterface
      */
     public function getClient(): ProxyClient
     {
-        return $this->getProxy()->getClient();
+        return $this->getServer()->getClient();
     }
 }
 

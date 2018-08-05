@@ -9,7 +9,11 @@ use pocketmine\utils\Config;
 
 define("COMPOSER", "vendor/autoload.php");
 
-$extensions = ["pthreads", "sockets", "yaml"];
+$extensions = [
+    "pthreads",
+    "sockets",
+    "yaml",
+    "zlib"];
 
 foreach ($extensions as $extension) {
     if (!extension_loaded($extension)) {
@@ -24,6 +28,7 @@ if (!is_file(COMPOSER)) {
 }
 
 /** @var ClassLoader $loader */
+/** @noinspection PhpIncludeInspection */
 $loader = require COMPOSER;
 
 $config = new Config("config.yml", Config::YAML, [

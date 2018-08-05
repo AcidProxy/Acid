@@ -6,6 +6,7 @@ namespace proxy\plugin;
 
 use pocketmine\network\mcpe\protocol\DataPacket;
 use proxy\command\sender\Sender;
+use proxy\ProxyServer;
 
 /**
  * Interface PluginInterface
@@ -22,8 +23,6 @@ interface PluginInterface
     /**
      * @return void
      *
-     * Not works!
-     * TODO: Fix
      */
     public function onDisable(): void;
 
@@ -62,4 +61,5 @@ interface PluginInterface
      * @return void
      */
     public function onCommand(Sender $client, string $command, array $args): void;
+
 }

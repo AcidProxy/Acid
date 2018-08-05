@@ -32,11 +32,10 @@ class PluginDescription
     /**
      * PluginDescription constructor.
      * @param array $pluginData
-     * @param Logger $logger
      *
      * @throws \Exception
      */
-    public function __construct(array $pluginData, Logger $logger)
+    public function __construct(array $pluginData)
     {
         $this->name = $pluginData['name'];
         if (preg_match('/^[A-Za-z0-9 _.-]+$/', $this->name) === 0) {
@@ -84,5 +83,12 @@ class PluginDescription
     public function getVersion(): string
     {
         return $this->version;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAuthor(): string{
+        return $this->author;
     }
 }

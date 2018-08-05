@@ -4,25 +4,39 @@ declare(strict_types=1);
 
 namespace proxy;
 
-use pocketmine\entity\Attribute;
-use pocketmine\network\mcpe\protocol\PacketPool;
 use pocketmine\network\mcpe\protocol\TextPacket;
-use pocketmine\utils\TextFormat;
+use proxy\command\base\FlyCommand;
+use proxy\command\base\GamemodeCommand;
+use proxy\command\base\HelpCommand;
+use proxy\command\base\PluginsCommand;
+use proxy\command\base\StopCommand;
+use proxy\network\AbstractConnection;
+use proxy\network\DownstreamAbstractConnection;
+use proxy\network\Socket;
+use proxy\network\SocketListener;
+use proxy\network\UpstreamAbstractConnection;
+use proxy\networkOld\socket\SocketManager;
+use proxy\networkOld\raknet\client\SessionManager;
 use proxy\command\CommandMap;
 use proxy\hosts\BaseHost;
 use proxy\hosts\ProxyClient;
 use proxy\hosts\TargetServer;
-use proxy\network\socket\SocketManager;
 use proxy\plugin\PluginManager;
-use proxy\raknet\client\SessionManager;
-use proxy\scheduler\ProxyScheduler;
+use proxy\scheduler\Task;
+use proxy\scheduler\TaskScheduler;
 use proxy\utils\Logger;
-use proxy\utils\PacketSession;
+use proxy\utils\NetworkUtils;
+//raklib
 use raklib\protocol\Datagram;
 use raklib\protocol\OpenConnectionRequest1;
 use raklib\protocol\UnconnectedPing;
 use raklib\protocol\UnconnectedPong;
+use raklib\server\UDPServerSocket;
 use raklib\utils\InternetAddress;
+//pocketmine
+use pocketmine\entity\Attribute;
+use pocketmine\network\mcpe\protocol\PacketPool;
+use pocketmine\utils\TextFormat;
 
 /**
  * Class ProxyServer
@@ -31,29 +45,39 @@ use raklib\utils\InternetAddress;
 class ProxyServer
 {
 
+    /**
+     * @var ProxyServer $instance
+     */
+    private static $instance;
+
     public const PLUGINS_DIR = "plugins";
     public const SERVER_API = "1.0.0";
 
     /** @var bool $running */
     protected $running = true;
 
-    /** @var Logger $logger */
-    private $logger;
+    /**
+     * @var Socket $serverSocket;
+     */
+    private $serverSocket;
 
-    /** @var SocketManager $socketMgr */
-    private $socketMgr;
+    /**
+     * @var SocketListener $socketListener
+     */
+    private $socketListener;
 
-    /** @var TargetServer $targetServer */
-    private $targetServer;
+    /**
+     * @var UpstreamAbstractConnection $upstreamConnection
+     */
+    public $upstreamConnection;
 
-    /** @var ProxyScheduler $proxyScheduler */
-    private $proxyScheduler;
+    /**
+     * @var DownstreamAbstractConnection $downstreamConnection
+     */
+    public $downstreamConnection;
 
-    /** @var ProxyClient $proxyClient */
-    private $proxyClient;
-
-    /** @var PacketSession $packetSession */
-    private $packetSession;
+    /** @var NetworkUtils $networkUtils */
+    private $networkUtils;
 
     /** @var SessionManager $sessionManager */
     private $sessionManager;
@@ -65,6 +89,17 @@ class ProxyServer
     private $commandMap;
 
     /**
+     * @var TaskScheduler $taskScheduler
+     */
+    private $taskScheduler;
+
+    /**
+     * @var int $lastTick
+     */
+    private $lastTick = 0;
+
+
+    /**
      * ProxyServer constructor.
      * @param string $serverAddress
      * @param int $serverPort
@@ -74,37 +109,71 @@ class ProxyServer
      */
     public function __construct(string $serverAddress, int $serverPort, int $bindPort, string $bindAddress = '0.0.0.0')
     {
-        $startTime = microtime(true);
+        define('acid\START_TIME', microtime(true));
+        self::$instance = $this;
 
-        $connection["address"] = $bindAddress;
-        $connection["port"] = $bindPort;
+        Logger::log("Starting Acid v" . self::SERVER_API);
+        cli_set_process_title("Acid v" . self::SERVER_API);
 
-        $this->logger = new Logger($this);
-        $this->socketMgr = new SocketManager($this, $connection);
-        $this->proxyScheduler = new ProxyScheduler();
-        $this->proxyClient = new ProxyClient($this);
-        $this->packetSession = new PacketSession($this);
-        $this->sessionManager = new SessionManager($this);
-        $this->targetServer = new TargetServer($this, new InternetAddress(gethostbyname($serverAddress), $serverPort, 2));
-        $this->pluginManager = new PluginManager($this);
+        //register default commands
         $this->commandMap = new CommandMap($this);
+        $commands = [new GamemodeCommand($this->commandMap), new HelpCommand($this->commandMap), new PluginsCommand($this->commandMap), new StopCommand($this->commandMap), new FlyCommand($this->commandMap)];
+        for($i=0; $i < count($commands); ++$i){
+            $this->commandMap->registerCommand($commands[$i]);
+        }
+
+        //load plugins
+        $this->pluginManager = new PluginManager($this);
+        $this->pluginManager->loadPlugins(self::PLUGINS_DIR);
+
+        //downstream/upstream connection & udp socket
+        $this->serverSocket = new Socket(100);
+        $this->serverSocket->bind(new InternetAddress($bindAddress, $bindPort, 4));
+        $this->serverSocket->start();
+
+        $this->socketListener = new SocketListener($this);
+
+        $this->upstreamConnection = new UpstreamAbstractConnection(new InternetAddress(gethostbyname($serverAddress), $serverPort, 4), $this);
+
+        //start reading console commands
+        $this->commandMap->consoleCommandReader->start(PTHREADS_INHERIT_ALL);
+
+        $this->networkUtils = new NetworkUtils($this);
+        $this->taskScheduler = new TaskScheduler();
+
 
         PacketPool::init();
-        Attribute::init();
-
-        $this->startThreadWorkers();
-
-        $this->pluginManager->loadPlugins(self::PLUGINS_DIR);
-        $this->getLogger()->info(TextFormat::GREEN . "Proxy started in " . round((microtime(true) - $startTime), 3) . " seconds");
-
-
         $this->tickProcessor();
+    }
+
+    public static function getInstance() : ProxyServer{
+        return self::$instance;
+    }
+
+    /**
+     * @return TaskScheduler
+     */
+    public function getScheduler() : TaskScheduler{
+        return $this->taskScheduler;
     }
 
     /**
      * @return void
+     * @throws \Exception
      */
-    public function tickProcessor(): void
+    public function shutdown() : void{
+        Logger::log("Shutting down...");
+
+        $this->serverSocket->close();
+        $this->running = false;
+        //todo: disconnect the client
+    }
+
+    /**
+     * @return void
+     * @throws \Exception
+     */
+    private function tickProcessor(): void
     {
         while ($this->running !== false) {
             $this->tick();
@@ -114,10 +183,25 @@ class ProxyServer
     /**
      * @return void
      */
-    public function tick(): void
+    private function tickSchedulers() : void{
+        if(microtime(true) - \acid\START_TIME >= $this->lastTick / 20) {
+            foreach($this->taskScheduler->getTaskList() as $id => $task){
+                if($this->lastTick %$task->getPeriod() === 0){
+                    $task->run();
+                }
+            }
+            $this->lastTick++;
+        }
+    }
+
+    /**
+     * @return void
+     */
+    private function tick(): void
     {
         $this->tickNetwork();
         $this->tickCommands();
+        $this->tickSchedulers();
     }
 
     /**
@@ -133,142 +217,63 @@ class ProxyServer
      */
     private function tickNetwork(): void
     {
-        //replace catch of disconnect packet
-        if ($this->getClient()->isConnected() && $this->getClient()->isLogged()) {
-            $time_diff = time() - $this->getClient()->getLastPacket();
-            if ($time_diff > ProxyClient::CLIENT_TIMEOUT_LIMIT) {
-                $this->getClient()->timeout();
-            }
-        }
-
-        foreach ($this->socketMgr->received as $index => $received) {
+        foreach ($this->serverSocket->bufferQueue as $index => $data) {
             /** @var string $buffer */
-            $buffer = $received[0];
+            $buffer = $data[0];
             /** @var string $address */
-            $address = $received[1];
+            $address = $data[1];
             /** @var int $port */
-            $port = $received[2];
+            $port = $data[2];
 
-            if (is_null($buffer) || is_null($address) || is_null($port)) return;
 
-            $compareAddress = new InternetAddress(gethostbyname($address), $port, 2);
+            foreach ([$buffer, $address, $port] as $value) {
+                if (is_null($value)) return;
+            }
 
-            if (!$this->getClient()->isConnected()) {
-                $this->handleRakNetPacket($buffer, $compareAddress);
+            unset($this->serverSocket->bufferQueue[$index]);
+            $compareAddress = new InternetAddress(gethostbyname($address), $port, 4);
+            if (!$this->upstreamConnection->isConnected()) {
+                $this->socketListener->listen($buffer, $compareAddress);
             } else {
-                if ($compareAddress->equals($this->getTargetServer()->getAddress())) {
-                    $this->getClient()->sendPacket($buffer);
-                    $this->getPacket($buffer, $this->getTargetServer());
-                    $this->getClient()->setLastPacket(time());
-                } elseif ($compareAddress->equals($this->getClient()->getAddress())) {
+                if ($compareAddress->equals($this->upstreamConnection->address)) {
+                    $this->networkUtils->writePacket($buffer, $this->downstreamConnection);
+                    $this->getPacket($buffer, $this->upstreamConnection);
+                } elseif ($compareAddress->equals($this->downstreamConnection->address)) {
                     $pid = ord($buffer{0});
                     if (($pid & Datagram::BITFLAG_VALID) !== 0) {
-                        $this->getClient()->setLastPacket(time());
-                        if ($pid & Datagram::BITFLAG_ACK) {
-                            goto a;
-                        } elseif ($pid & Datagram::BITFLAG_NAK) {
+                        if ($pid & Datagram::BITFLAG_ACK || $pid & Datagram::BITFLAG_NAK) {
                             goto a;
                         } else {
                             $datagram = new Datagram($buffer);
                             @$datagram->decode();
-                            $datagram->seqNumber = $this->getPacketSession()->sendSeqNumber++;
-                            $this->getTargetServer()->sendPacket($datagram->buffer);
-                            $this->getPacket($buffer, $this->getClient());
+                            $datagram->seqNumber = $this->getNetworkUtils()->sendSeqNumber++;
+                            $this->networkUtils->writePacket($buffer, $this->upstreamConnection);
+                            $this->getPacket($buffer, $this->downstreamConnection);
                         }
                     } else {
                         a:
-                        $this->getTargetServer()->sendPacket($buffer);
+                        $this->networkUtils->writePacket($buffer, $this->upstreamConnection);
                     }
                 }
             }
-            unset($this->socketMgr->received[$index]);
-            unset($index);
         }
     }
 
     /**
      * @param string $buffer
-     * @param BaseHost $host
-     *
-     * @return null|string
+     * @param AbstractConnection $connection
      */
-    public function getPacket(string $buffer, BaseHost $host): ?string
-    {
-        if (($packet = $this->packetSession->readDataPacket($buffer)) !== null) {
-            if ($host instanceof ProxyClient) {
-                $state = $this->getClient()->getNetworkSession()->handleClientDataPacket($packet);
-                if (!$state) {
-                    $this->getTargetServer()->sendPacket($this->getPacketSession()->forwardPacket($packet)->getBuffer());
-                    return null;
-                }
-            } else {
-                $this->getClient()->getNetworkSession()->handleServerDataPacket($packet);
-            }
-        }
-        return $buffer;
-    }
-
-
-    /**
-     * @param string $buffer
-     * @param InternetAddress $compareAddress
-     */
-    private function handleRakNetPacket(string $buffer, InternetAddress $compareAddress): void
-    {
-        switch (ord($buffer{0})) {
-            case UnconnectedPing::$ID;
-                if (!isset($this->sessionManager->clientSessions[gethostbyname($compareAddress->ip)])) {
-                    $this->sessionManager->addSession($compareAddress);
-                }
-                if (!$this->getClient()->isConnected()) {
-                    $this->getClient()->setAddress($compareAddress);
-                }
-                $this->getTargetServer()->sendPacket($buffer);
-                break;
-            case UnconnectedPong::$ID;
-                $serverInfo = explode(';', substr($buffer, 40));
-                if (empty($this->getTargetServer()->getInformation())) {
-                    $this->getLogger()->info(TextFormat::YELLOW . "SERVER INFROMATION");
-                    $this->getLogger()->info(TextFormat::AQUA . "PLAYERS: " . $serverInfo[3]);
-                    $this->getLogger()->info(TextFormat::AQUA . "MCPE: " . $serverInfo[2]);
-                    $this->getLogger()->info(TextFormat::AQUA . "PROTOCOL: " . $serverInfo[1]);
-                    $this->getLogger()->info(TextFormat::AQUA . "MOTD: " . $serverInfo[0] . PHP_EOL);
-                }
-                $this->getTargetServer()->setInformation($serverInfo);
-                foreach ($this->sessionManager->clientSessions as $session) {
-                    if (!$session->isConnected()) {
-                        $this->writePacket($buffer, $session->getAddress()->ip, $session->getAddress()->port);
-                    }
-                }
-                break;
-            case OpenConnectionRequest1::$ID;
-                $replacedAddress = str_replace(" ", ":", $compareAddress->toString());
-                $this->getLogger()->info(TextFormat::YELLOW . "New connection from " . TextFormat::AQUA . "[" . $replacedAddress . "]" . PHP_EOL);
-                $this->getClient()->setAddress($compareAddress);
-                $this->getClient()->setConnected(true);
-                $this->sessionManager->clientSessions[gethostbyname($compareAddress->ip)]->setConnected(true);
-                $server = $this->getTargetServer()->getAddress();
-                $this->writePacket($buffer, $server->ip, $server->port);
-                break;
+    public function getPacket(string $buffer, AbstractConnection $connection) : void{
+        if(($packet = $this->networkUtils->readDataPacket($buffer)) !== null){
+            $connection instanceof UpstreamAbstractConnection ? $this->downstreamConnection->handlePacket($packet) : $this->upstreamConnection->handlePacket($packet);
         }
     }
 
     /**
-     * @return void
+     * @return Socket
      */
-    private function startThreadWorkers(): void
-    {
-        $this->socketMgr->start(PTHREADS_INHERIT_ALL);
-        $this->commandMap->consoleCommandReader->start(PTHREADS_INHERIT_ALL);
-    }
-
-    public function stop(): void
-    {
-        $this->running = false;
-        $this->socketMgr->stop = true;
-        $this->commandMap->consoleCommandReader->stop = true;
-        gc_collect_cycles();
-        exit;
+    public function getSocket() : Socket{
+        return $this->serverSocket;
     }
 
     /**
@@ -288,61 +293,11 @@ class ProxyServer
     }
 
     /**
-     * @return SessionManager
+     * @return NetworkUtils
      */
-    public function getSessionManager(): SessionManager
+    public function getNetworkUtils(): NetworkUtils
     {
-        return $this->sessionManager;
-    }
-
-    /**
-     * @return ProxyClient
-     */
-    public function getClient(): ProxyClient
-    {
-        return $this->proxyClient;
-    }
-
-    /**
-     * @return PacketSession
-     */
-    public function getPacketSession(): PacketSession
-    {
-        return $this->packetSession;
-    }
-
-    /**
-     * @return ProxyScheduler
-     */
-    public function getScheduler(): ProxyScheduler
-    {
-        return $this->proxyScheduler;
-    }
-
-    /**
-     * @return TargetServer
-     */
-    public function getTargetServer(): TargetServer
-    {
-        return $this->targetServer;
-    }
-
-    /**
-     * @param string $buffer
-     * @param string $host
-     * @param int $port
-     */
-    public function writePacket(string $buffer, string $host, int $port): void
-    {
-        $this->socketMgr->toSend[] = [$buffer, $host, $port];
-    }
-
-    /**
-     * @return Logger
-     */
-    public function getLogger(): Logger
-    {
-        return $this->logger;
+        return $this->networkUtils;
     }
 
 }

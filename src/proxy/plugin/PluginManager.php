@@ -7,6 +7,7 @@ namespace proxy\plugin;
 use pocketmine\utils\TextFormat;
 use proxy\command\PluginCommand;
 use proxy\ProxyServer;
+use proxy\utils\Logger;
 
 /**
  * Class PluginManager
@@ -109,27 +110,28 @@ class PluginManager
         $loaded = 0;
         foreach ($dirs as $dir) {
             if (!is_file($file = $dir . $ds . "plugin.yml")) {
-                $this->getProxy()->getLogger()->error("Error while loading plugin " . basename($dir) . ": {$file} not found");
+                Logger::log("Error while loading plugin " . basename($dir) . ": {$file} not found");
                 continue;
             }
             $data = yaml_parse_file($dataFile = $dir . $ds . "plugin.yml");
-            if (!isset($data['name']) || !isset($data['api']) || !isset($data['version']) || !isset($data['description']) || !isset($data['main'])) {
-                $this->getProxy()->getLogger()->error("Error while loading plugin " . basename($dir) . ": Invalid plugin description.");
+            if (!isset($data['name']) || !isset($data['api']) || !isset($data['version']) || !isset($data['main'])) {
+                Logger::log("Error while loading plugin " . basename($dir) . ": Invalid plugin description.");
                 continue;
             }
             if (!is_file($main = dirname($dataFile) . $ds . "src" . $ds . str_replace("\\", $ds, $data['main']) . ".php")) {
-                $this->getProxy()->getLogger()->error("Error while loading plugin " . $data['name'] . ": Main class not found ($main).");
+                Logger::log("Error while loading plugin " . $data['name'] . ": Main class not found ($main).");
                 continue;
             }
             if ($data['api'] !== ProxyServer::SERVER_API) {
-                $this->getProxy()->getLogger()->error("Error while loading plugin " . $data['name'] . ": Incompatible api version.");
+                Logger::log("Error while loading plugin " . $data['name'] . ": Incompatible api version.");
                 continue;
             }
+            /** @noinspection PhpIncludeInspection */
             require $main;
             /** @var PluginBase $plugin */
             $plugin = new $data['main'];
             if (!is_a($plugin, PluginBase::class)) {
-                $this->getProxy()->getLogger()->error("Could not load plugin " . $data['name'] . ": Invalid main class");
+                Logger::log("Could not load plugin " . $data['name'] . ": Invalid main class");
                 continue;
             }
             $this->plugins[$data['name']] = $plugin;
@@ -142,10 +144,10 @@ class PluginManager
                     $this->getProxy()->getCommandMap()->registerCommand(new PluginCommand($commandName, $description, $plugin));
                 }
             }
-            $plugin->init($this->getProxy(), new PluginDescription($data, $this->getProxy()->getLogger()));
+            $plugin->init($this->getProxy(), new PluginDescription($data));
             $loaded++;
         }
-        $this->getProxy()->getLogger()->info("§a{$loaded} plugins loaded!");
+        Logger::log("Loaded {$loaded} plugins");
     }
 
 }
