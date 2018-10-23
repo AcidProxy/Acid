@@ -37,11 +37,13 @@
 
 1)  Open command shell
 2) Run these commands:
-		`apt-get install git`
-		`git clone https://github.com/AcidProxy/Acid`
-		`cd Acid`
-		`chmod 777 ./start.sh`
-		`./start.sh`
+```
+apt-get install git
+git clone https://github.com/AcidProxy/Acid
+cd Acid
+chmod +x start.sh
+./start.sh
+```
 3) Run `./start.sh` again
 
 
