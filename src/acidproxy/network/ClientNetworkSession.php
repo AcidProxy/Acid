@@ -1,0 +1,147 @@
+<?php
+
+declare(strict_types=1);
+
+namespace acidproxy\network;
+
+use acidproxy\Client;
+use pocketmine\network\mcpe\protocol\DataPacket;
+use pocketmine\network\mcpe\protocol\LoginPacket;
+use pocketmine\network\mcpe\protocol\MovePlayerPacket;
+use pocketmine\network\mcpe\protocol\SetLocalPlayerAsInitializedPacket;
+use pocketmine\network\mcpe\protocol\SetPlayerGameTypePacket;
+use pocketmine\network\mcpe\protocol\StartGamePacket;
+use pocketmine\network\mcpe\protocol\TextPacket;
+use pocketmine\utils\Terminal;
+use acidproxy\plugin\PluginBase;
+use acidproxy\ProxyServer;
+
+class ClientNetworkSession {
+
+    /** @var ProxyServer $proxyServer */
+    private $proxyServer;
+
+    /** @var Client $client */
+    private $client;
+
+    /**
+     * ClientNetworkSession constructor.
+     * @param Client $client
+     * @param ProxyServer $proxyServer
+     */
+    public function __construct(Client $client, ProxyServer $proxyServer) {
+        $this->client = $client;
+        $this->proxyServer = $proxyServer;
+    }
+
+    /**
+     * @return ProxyServer
+     */
+    public function getProxy(): ProxyServer {
+        return $this->proxyServer;
+    }
+
+    /**
+     * @return Client
+     */
+    public function getClient(): Client {
+        return $this->client;
+    }
+
+    /**
+     * @param DataPacket $packet
+     * @return bool
+     */
+    public function handleClientDataPacket(DataPacket $packet): bool {
+        $packet->decode();
+        if (!$packet->feof() && !$packet->mayHaveUnreadBytes()) {
+            $remains = substr($packet->buffer, $packet->offset);
+            echo Terminal::$COLOR_BLUE . "Still " . strlen($remains) . " bytes unread in " . $packet->getName() . ": 0x" . bin2hex($remains) . PHP_EOL;
+            return true;
+        }
+        switch ($packet::NETWORK_ID) {
+            case LoginPacket::NETWORK_ID:
+                /** @var LoginPacket $packet */
+                $this->getClient()->handleLogin($packet);
+                break;
+            case MovePlayerPacket::NETWORK_ID:
+                /** @var MovePlayerPacket $packet */
+                $this->getClient()->setPosition($packet->position);
+                break;
+            case SetPlayerGameTypePacket::NETWORK_ID:
+                /** @var SetPlayerGameTypePacket $packet */
+                $this->getClient()->setGamemode($packet->gamemode, false);
+                break;
+            case StartGamePacket::NETWORK_ID:
+                /** @var StartGamePacket $packet */
+                $this->getClient()->setGamemode($packet->worldGamemode, false);
+                break;
+            case SetLocalPlayerAsInitializedPacket::NETWORK_ID:
+                /** @var SetLocalPlayerAsInitializedPacket $packet */
+                $this->getClient()->setEntityRuntimeId($packet->entityRuntimeId);
+                break;
+            case TextPacket::NETWORK_ID:
+                $cmd = ".";
+                /** @var TextPacket $packet */
+                if ($packet->type == TextPacket::TYPE_CHAT) {
+                    if (substr($packet->message, 0, 1) == $cmd) {
+                        $args = explode(" ", substr($packet->message, 1));
+                        $commandName = $args[0];
+                        array_shift($args);
+                        $this->getProxy()->getCommandMap()->getCommand($commandName)->execute($this->getClient(), $args);
+                    }
+                }
+                break;
+        }
+        /**
+         * @var PluginBase $plugin
+         */
+        foreach ($this->getProxy()->getPluginManager()->getPlugins() as $plugin) {
+            if ($plugin->isEnabled()) {
+                $plugin->handlePacketSend($packet); //TODO: return bool
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @param DataPacket $packet
+     */
+    public function handleServerDataPacket(DataPacket $packet) {
+        $packets = [SetPlayerGameTypePacket::NETWORK_ID, StartGamePacket::NETWORK_ID];
+        switch ($packet::NETWORK_ID) {
+            case TextPacket::NETWORK_ID;
+                /** @var TextPacket $packet */
+                $packet->decode();
+                if ($packet->type == TextPacket::TYPE_RAW ||
+                    $packet->type == TextPacket::TYPE_SYSTEM ||
+                    $packet->type == TextPacket::TYPE_TRANSLATION ||
+                    $packet->type == TextPacket::TYPE_ANNOUNCEMENT) {
+                    $this->getProxy()->getLogger()->info($packet->message);
+                }
+                break;
+            case SetPlayerGameTypePacket::NETWORK_ID;
+                /** @var SetPlayerGameTypePacket $packet */
+                $packet->decode();
+                $this->getClient()->setGamemode($packet->gamemode, false);
+                break;
+            case StartGamePacket::NETWORK_ID;
+                /** @var StartGamePacket $packet */
+                $packet->decode();
+                if ($packet->worldGamemode === null) {
+                    $this->getClient()->setGamemode(1, false);
+                    break;
+                }
+                $this->getClient()->setGamemode($packet->worldGamemode, false);
+                break;
+        }
+        /** @var PluginBase $plugin */
+        foreach ($this->getProxy()->getPluginManager()->getPlugins() as $plugin) {
+            if ($plugin->isEnabled()) {
+                $plugin->handlePacketReceive($packet);
+            }
+        }
+
+    }
+
+}

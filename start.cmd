@@ -18,4 +18,4 @@ if not exist vendor\autoload.php (
     exit
 )
 
-bin\php\php.exe src\proxy\Acid.php
+bin\php\php.exe src\acidproxy\AcidProxy.php

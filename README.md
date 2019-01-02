@@ -29,7 +29,7 @@
 #### Windows:
 
 1) Create folder for Acid Proxy
-2) [Download](https://jenkins.pmmp.io/job/PHP-7.2-Aggregate/lastSuccessfulBuild/artifact/PHP-7.2-Windows-x64.zip) and extract PHP to the created folder
+2) [Download](https://jenkins.pmmp.io/job/PHP-7.2-Aggregate/12/artifact/PHP-7.2-Windows-x64.zip) and extract PHP to the created folder
 3) [Download](https://github.com/AcidProxy/Acid/archive/master.zip) and extract Acid proxy to the created folder
 4) Run start.cmd script
 
