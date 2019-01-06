@@ -8,6 +8,7 @@ use acidproxy\utils\InternetAddress;
 use pocketmine\network\mcpe\protocol\AddEntityPacket;
 use pocketmine\network\mcpe\protocol\AddItemEntityPacket;
 use pocketmine\network\mcpe\protocol\AddPlayerPacket;
+use pocketmine\network\mcpe\protocol\AdventureSettingsPacket;
 use pocketmine\network\mcpe\protocol\DataPacket;
 use pocketmine\network\mcpe\protocol\DisconnectPacket;
 use pocketmine\network\mcpe\protocol\RemoveEntityPacket;
@@ -33,7 +34,7 @@ class DownstreamAbstractConnection extends AbstractConnection {
     private $upstreamConnection;
 
     /** @var array $spawnedEntities */
-    private $spawnedEntities = [];
+    public $spawnedEntities = [];
 
     /**
      * DownstreamAbstractConnection constructor.
@@ -70,14 +71,13 @@ class DownstreamAbstractConnection extends AbstractConnection {
                break;
             case AddEntityPacket::NETWORK_ID;
             case AddPlayerPacket::NETWORK_ID;
+                $packet->decode();
                 /**
                  * @var AddEntityPacket $packet
-                 * @var AddPlayerPacket $packet
-                 * @var AddItemEntityPacket $packet
+                 * @var AddEntityPacket $packet
                  */
-             //   $packet->decode();
+                $this->spawnedEntities[$packet->entityUniqueId] = $packet->entityRuntimeId;
 
-                array_push($this->spawnedEntities, $packet->entityUniqueId);
                 break;
             case RemoveEntityPacket::NETWORK_ID;
                 /**
@@ -85,8 +85,8 @@ class DownstreamAbstractConnection extends AbstractConnection {
                  */
                 $packet->decode();
 
-                if(in_array($packet->entityUniqueId, $this->spawnedEntities)){
-                    unset($this->spawnedEntities[array_search($packet->entityUniqueId, $this->spawnedEntities)]);
+                if(isset($this->spawnedEntities[$packet->entityUniqueId])){
+                    unset($this->spawnedEntities[$packet->entityUniqueId]);
                 }
                 break;
             case DisconnectPacket::NETWORK_ID;
@@ -106,6 +106,11 @@ class DownstreamAbstractConnection extends AbstractConnection {
                   $transfer->port = $packet->port;
                   $transfer->encode();
 
+                break;
+            case AdventureSettingsPacket::NETWORK_ID:
+                $pk = new AdventureSettingsPacket();
+                $pk->setFlag(AdventureSettingsPacket::ALLOW_FLIGHT, $this->server->getClient()->getAllowFly());
+                $this->server->getClient()->dataPacket($pk);
                 break;
         }
         foreach($this->server->getPluginManager()->getPlugins() as $plugin){

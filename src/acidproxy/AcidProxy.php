@@ -41,9 +41,4 @@ if (!is_file(COMPOSER)) {
     exit;
 }
 
-try {
-    new ProxyServer($logger);
-} catch (\Exception $exception) {
-    echo "Could not start server:" . $exception->getMessage();
-}
-
+new ProxyServer($logger);

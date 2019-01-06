@@ -28,7 +28,8 @@ class ServerManager {
             "motd" => $data[0],
             "protocol" => $data[1],
             "version" => $data[2],
-            "online" => $data[3]
+            "online" => $data[3],
+            "entities" => []
         ];
     }
 }

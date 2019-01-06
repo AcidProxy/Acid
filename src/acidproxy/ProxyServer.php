@@ -14,7 +14,9 @@ use acidproxy\scheduler\Scheduler;
 use acidproxy\utils\InternetAddress;
 use acidproxy\utils\Logger;
 use acidproxy\utils\NetworkUtils;
+use pocketmine\network\mcpe\protocol\DisconnectPacket;
 use pocketmine\utils\Config;
+use pocketmine\utils\Terminal;
 use raklib\protocol\Datagram;
 use pocketmine\network\mcpe\protocol\PacketPool;
 
@@ -31,6 +33,11 @@ class ProxyServer {
 
     /** @var bool $running */
     private static $running = true;
+
+
+    /** @var InternetAddress $targetAddress */
+    public $targetAddress;
+
 
     /** @var ProxyUDPSocket $proxyUDPSocket */
     private $proxyUDPSocket;
@@ -102,7 +109,7 @@ class ProxyServer {
         $this->client = new Client($this);
 
         $this->socketListener = new SocketListener($this);
-        $this->upstreamConnection = new UpstreamAbstractConnection(new InternetAddress(gethostbyname($serverIp), $serverPort), $this);
+        $this->upstreamConnection = new UpstreamAbstractConnection($this->targetAddress = new InternetAddress(gethostbyname($serverIp), $serverPort), $this);
 
         //start reading console commands
         $this->commandMap = new CommandMap($this);
@@ -116,6 +123,7 @@ class ProxyServer {
         $this->scheduler = new Scheduler($this);
 
         cli_set_process_title("AcidProxy v" . \acidproxy\VERSION);
+        ini_set('memory_limit', '-1');
 
         PacketPool::init();
         $this->tickProcessor();
@@ -196,7 +204,7 @@ class ProxyServer {
         } else {
             if ($address->equals($this->upstreamConnection->address)) {
                 $this->networkUtils->writePacket($buffer, $this->downstreamConnection);
-                $this->getPacket($buffer, $this->upstreamConnection);
+                $this->readPacket($buffer, $this->upstreamConnection);
             } elseif ($address->equals($this->downstreamConnection->address)) {
                 $pid = ord($buffer{0});
                 if (($pid & Datagram::BITFLAG_VALID) !== 0) {
@@ -207,7 +215,7 @@ class ProxyServer {
                         @$datagram->decode();
                         $datagram->seqNumber = $this->getNetworkUtils()->sendSeqNumber++;
                         $this->networkUtils->writePacket($buffer, $this->upstreamConnection);
-                        $this->getPacket($buffer, $this->downstreamConnection);
+                        $this->readPacket($buffer, $this->downstreamConnection);
                     }
                 } else {
                     a:
@@ -221,8 +229,9 @@ class ProxyServer {
      * @param string $buffer
      * @param AbstractConnection $connection
      */
-    public function getPacket(string $buffer, AbstractConnection $connection) : void{
-        if(($packet = $this->networkUtils->readDataPacket($buffer)) !== null){
+    public function readPacket(string $buffer, AbstractConnection $connection) : void{
+        $packet = $this->networkUtils->readDataPacket($buffer);
+        if($packet !== null){
             $connection instanceof UpstreamAbstractConnection ? $this->downstreamConnection->handlePacket($packet) : $this->upstreamConnection->handlePacket($packet);
         }
     }
@@ -268,6 +277,13 @@ class ProxyServer {
     public function stop() {
         self::$running = false;
         $this->commandMap->consoleCommandReader->stop = true;
+        if($this->getClient() instanceof Client) {
+            $pk = new DisconnectPacket();
+            $pk->message = "Proxy stopped.";
+            $pk->hideDisconnectionScreen = false;
+            $this->getClient()->dataPacket($pk);
+            echo Terminal::$COLOR_GRAY . "Click 'Enter' to close window.";
+        }
     }
 
     /**

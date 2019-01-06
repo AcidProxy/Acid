@@ -10,6 +10,7 @@ use pocketmine\network\mcpe\protocol\DisconnectPacket;
 use pocketmine\network\mcpe\protocol\LoginPacket;
 use acidproxy\plugin\PluginBase;
 use acidproxy\ProxyServer;
+use pocketmine\network\mcpe\protocol\TextPacket;
 
 /**
  * Class UpstreamAbstractConnection
@@ -72,6 +73,15 @@ class UpstreamAbstractConnection extends AbstractConnection {
                 }
 
                 $this->getProxy()->getLogger()->info("Logged in as {$packet->username} UUID: {$packet->clientUUID}");
+                break;
+            case TextPacket::NETWORK_ID:
+                /** @var TextPacket $packet */
+                $msg = $packet->message;
+                if(substr($msg, 0, 1) == ".") {
+                    $args = explode(" ", substr($msg, 1));
+                    $command = array_shift($args);
+                    $this->getProxy()->getCommandMap()->getCommand($command)->execute($this->getProxy()->getClient(), $args);
+                }
                 break;
             case DisconnectPacket::NETWORK_ID;
                 break;

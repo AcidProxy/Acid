@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace acidproxy\utils;
 
+use mysql_xdevapi\Exception;
 use pocketmine\network\mcpe\protocol\BatchPacket;
 use pocketmine\network\mcpe\protocol\DataPacket;
 use pocketmine\network\mcpe\protocol\PacketPool;
@@ -41,6 +42,9 @@ class NetworkUtils {
 
     /** @var NACK[] $NACKs */
     private $NACKs = [];
+
+    /** @var array $toSend */
+    private $toSend = [];
 
     /**
      * Pool constructor.
@@ -136,26 +140,54 @@ class NetworkUtils {
      * @param AbstractConnection $connection
      */
     public function writeDataPacket(DataPacket $packet, AbstractConnection $connection): void {
-        $batch = new BatchPacket();
-        $batch->addPacket($packet);
-        $batch->setCompressionLevel(7);
-        $batch->encode();
-        $encapsulated = new EncapsulatedPacket;
-        $encapsulated->reliability = 0;
-        $encapsulated->buffer = $batch->buffer;
-        $offset = 3;
-        $encapsulated->orderIndex = Binary::readLTriad(substr($encapsulated->buffer, $offset, 3));
-        $offset += 3;
-        $encapsulated->orderChannel = ord($encapsulated->buffer{$offset++});
-        $encapsulated->messageIndex = Binary::readLTriad(substr($encapsulated->buffer, $offset, 3));
-        $offset += 3;
-        $encapsulated->sequenceIndex = Binary::readLTriad(substr($encapsulated->buffer, $offset, 3));
-        $dataPacket = new Datagram;
-        $dataPacket->seqNumber = $this->sendSeqNumber++;
-        $dataPacket->sendTime = microtime(true);
-        $dataPacket->packets = [$encapsulated];
-        $dataPacket->encode();
-        $this->writePacket($dataPacket->buffer, $connection);
+        try {
+            $batch = null;
+            if($packet instanceof BatchPacket) {
+                $batch = $packet;
+                $batch->setCompressionLevel(7);
+                $batch->encode();
+            }
+            else {
+                $batch = new BatchPacket();
+                $batch->addPacket($packet);
+                foreach ($this->toSend as $index => $pk) {
+                    $batch->addPacket($pk);
+                    unset($this->toSend[$index]);
+                }
+                $batch->setCompressionLevel(7);
+                $batch->encode();
+            }
+
+
+            $encapsulated = new EncapsulatedPacket;
+            $encapsulated->reliability = 0;
+            $encapsulated->buffer = $batch->buffer;
+
+            $offset = 3;
+            $lTriad = substr($encapsulated->buffer, $offset, 3);
+            if(is_string($lTriad)) {
+                $encapsulated->orderIndex = Binary::readLTriad($lTriad);
+                $offset += 3;
+                $encapsulated->orderChannel = ord($encapsulated->buffer{$offset++});
+                $encapsulated->messageIndex = Binary::readLTriad(substr($encapsulated->buffer, $offset, 3));
+                $offset += 3;
+                $encapsulated->sequenceIndex = Binary::readLTriad(substr($encapsulated->buffer, $offset, 3));
+                $dataPacket = new Datagram;
+                $dataPacket->seqNumber = $this->sendSeqNumber++;
+                $dataPacket->sendTime = microtime(true);
+                $dataPacket->packets = [$encapsulated];
+                $dataPacket->encode();
+                $this->writePacket($dataPacket->buffer, $connection);
+            }
+            else {
+                $this->toSend[] = $batch;
+            }
+
+        }
+        catch (\Exception $exception) {
+            $this->proxyServer->getLogger()->error($exception->getMessage());
+        }
+
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace acidproxy\command;
 
+use acidproxy\command\base\BoundingBoxCommand;
 use acidproxy\command\base\FlyCommand;
 use acidproxy\command\base\GamemodeCommand;
 use acidproxy\command\base\HelpCommand;
@@ -48,6 +49,7 @@ class CommandMap {
         $this->registerCommand(new GamemodeCommand($this));
         $this->registerCommand(new PluginsCommand($this));
         $this->registerCommand(new StopCommand($this));
+        $this->registerCommand(new BoundingBoxCommand($this));
     }
 
 

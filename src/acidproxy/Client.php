@@ -120,7 +120,12 @@ class Client implements Sender {
      * @param DataPacket $pk
      */
     public function dataPacket(DataPacket $pk) {
-        $this->getProxy()->getNetworkUtils()->writeDataPacket($pk, $this->getProxy()->downstreamConnection);
+        try {
+            $this->getProxy()->getNetworkUtils()->writeDataPacket($pk, $this->getProxy()->downstreamConnection);
+        }
+        catch (\Exception $exception) {
+            $this->getProxy()->getLogger()->error($exception->getMessage());
+        }
     }
 
     /**
@@ -132,6 +137,7 @@ class Client implements Sender {
         $pk = new TextPacket();
         $pk->message = $message;
         $pk->type = TextPacket::TYPE_CHAT;
+        $pk->sourceName = $this->getName();
         $this->dataPacket($pk);
     }
 
@@ -200,7 +206,7 @@ class Client implements Sender {
 
         if(!$send) return;
         $pk = new SetPlayerGameTypePacket();
-        $pk->gamemode;
+        $pk->gamemode = $gamemode;
         $this->dataPacket($pk);
     }
 
@@ -226,6 +232,7 @@ class Client implements Sender {
         $pk = new AdventureSettingsPacket();
         $pk->entityUniqueId = $this->getEntityUniqueId();
         $pk->setFlag(AdventureSettingsPacket::ALLOW_FLIGHT, $fly);
+        $this->dataPacket($pk);
     }
 
     /**
