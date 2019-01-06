@@ -4,7 +4,7 @@ if [ ! -f ./bin/php7/bin/php ]; then
     echo "PHP Binary not found, installing php..."
     wget https://jenkins.pmmp.io/job/PHP-7.2-Aggregate/12/artifact/PHP-7.2-Linux-x86_64.tar.gz;
     echo "Extracting php binary..."
-    tar -xzf PHP_Linux-x86_64.tar.gz
+    tar -xzf PHP-7.2-Linux-x86_64.tar.gz
     if [ -f ./bin/php7/bin/php ]; then
         echo "PHP successfully installed!";
     fi
